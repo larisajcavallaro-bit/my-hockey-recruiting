@@ -1,0 +1,62 @@
+"use client";
+
+import React, { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import NotificationPreferences from "@/components/dashboard/parentDashboard/Settings/NotificationPreferences";
+import SecuritySettings from "@/components/dashboard/parentDashboard/Settings/SecuritySettings";
+import SubscriptionSettings from "@/components/dashboard/parentDashboard/Settings/SubscriptionSettings";
+
+export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState("notifications");
+
+  return (
+    <div className="min-h-screen p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-black-900 mb-2">Settings</h1>
+        <p className="text-sub-text1/80 font-medium">
+          Manage your account settings and preferences
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-slate-700 p-1 rounded-lg mb-8">
+          <TabsTrigger
+            value="notifications"
+            className="data-[state=active]:bg-button-clr1 data-[state=active]:text-white text-slate-300 rounded-md"
+          >
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger
+            value="security"
+            className="data-[state=active]:bg-button-clr1 data-[state=active]:text-white text-slate-300 rounded-md"
+          >
+            Security
+          </TabsTrigger>
+          <TabsTrigger
+            value="subscription"
+            className="data-[state=active]:bg-button-clr1 data-[state=active]:text-white text-slate-300 rounded-md"
+          >
+            Subscription
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications">
+          <NotificationPreferences />
+        </TabsContent>
+
+        {/* Security Tab */}
+        <TabsContent value="security">
+          <SecuritySettings />
+        </TabsContent>
+
+        {/* Subscription Tab */}
+        <TabsContent value="subscription">
+          <SubscriptionSettings />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
