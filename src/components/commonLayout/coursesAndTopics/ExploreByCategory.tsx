@@ -43,7 +43,7 @@ type Topic = {
 const categories: Category[] = [
   { id: "all", label: "All Topics", icon: BookOpen },
   { id: "grammar", label: "Grammar", icon: FileText },
-  { id: "maurita", label: "Maurita Topics", icon: Target },
+  { id: "training", label: "Training Topics", icon: Target },
   { id: "listening", label: "Listening & Reading", icon: MessageCircle },
 ];
 
@@ -93,7 +93,7 @@ const topics: Topic[] = [
     title: "Culture & Traditions",
     description:
       "Master advanced grammar concepts and improve your writing skills",
-    category: "maurita",
+    category: "training",
     difficulty: "Easy",
     lessons: 6,
     icon: Users,

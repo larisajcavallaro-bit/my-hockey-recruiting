@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { PrivacyBadge } from "../../../../components/dashboard/parentDashboard/Events/PrivacyBadge";
 import { EventsGrid } from "../../../../components/dashboard/parentDashboard/Events/EventsGrid";
@@ -27,96 +27,144 @@ const EventFilters = dynamic(
 
 interface Event {
   id: string;
-  coachName: string;
+  title: string;
   date: string;
-  rinkName?: string;
+  description?: string | null;
+  eventType?: string | null;
+  rinkName?: string | null;
   location: string;
   time: string;
   ageGroup: string;
-  team: string;
   teamLogo: string;
-  organizer: string;
-  teamDetails: string;
-  socialMedia: string;
+  image?: string | null;
+  coachName: string;
+  organizedBy: string;
+  websiteLink?: string | null;
+  socialMediaLink?: string | null;
   rsvp: "going" | "notGoing" | null;
+  rsvpPlayerId?: string | null;
+  rsvpPlayerName?: string | null;
+  rsvpPlayerFirstName?: string | null;
 }
 
 interface FilterState {
   coachName: string;
+  eventType: string;
   location: string;
   league: string;
   team: string;
   ageGroup: string;
 }
 
-const EventsPage = () => {
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: "1",
-      coachName: "Jake THOMPSON",
-      date: "Jan 15, 2026",
-      rinkName: "ICE Arena North",
-      location: "1200 Ice Rink Blvd, Chicago, IL 60601, USA",
-      time: "6:00 PM-8PM",
-      ageGroup: "2012",
-      team: "Toronto Elite AAA",
-      teamLogo: "/newasset/event/demoLogo1.png",
-      organizer: "Toronto Elite AAA",
-      teamDetails: "Team Details",
-      socialMedia: "Social media",
-      rsvp: null,
-    },
+interface Player {
+  id: string;
+  name: string;
+}
 
-    {
-      id: "2",
-      coachName: "Jake THOMPSON",
-      date: "Jan 15, 2026",
-      rinkName: "ICE Arena North",
-      location: "1200 Ice Rink Blvd, Chicago, IL 60601, USA",
-      time: "6:00 PM-8PM",
-      ageGroup: "2012",
-      team: "Toronto Elite AAA",
-      teamLogo: "/newasset/event/demoLogo1.png",
-      organizer: "Toronto Elite AAA",
-      teamDetails: "Team Details",
-      socialMedia: "Social media",
-      rsvp: null,
-    },
-  ]);
+const EventsPage = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<FilterState>({
     coachName: "",
-    location: "",
-    league: "",
-    team: "",
+    eventType: "all",
+    location: "all",
+    league: "all",
+    team: "all",
     ageGroup: "All Ages",
   });
 
-  // Handle RSVP toggle
-  const handleRsvp = (eventId: string, response: "going" | "notGoing") => {
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      setFetchError(null);
+      Promise.all([
+      fetch("/api/events")
+        .then(async (r) => {
+          if (!r.ok) {
+            const err = await r.text();
+            throw new Error(r.status === 401 ? "Please sign in to view events" : err || "Failed to load events");
+          }
+          return r.json();
+        })
+        .then((data) => data.events ?? []),
+      fetch("/api/players?mine=1").then((r) => (r.ok ? r.json() : { players: [] })),
+    ])
+      .then(([eventsList, playersRes]) => {
+        setEvents(eventsList);
+        setPlayers(playersRes.players ?? []);
+      })
+      .catch((err) => {
+        setFetchError(err instanceof Error ? err.message : "Failed to load events");
+      })
+      .finally(() => setLoading(false));
+    });
+  }, []);
+
+  const handleRsvp = async (
+    eventId: string,
+    response: "going" | "notGoing",
+    playerId?: string,
+  ) => {
+    if (response === "going" && (!playerId || players.length === 0)) return;
+    const res = await fetch("/api/events/rsvp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventId,
+        status: response,
+        ...(response === "going" && playerId ? { playerId } : {}),
+      }),
+    });
+    if (!res.ok) return;
     setEvents((prev) =>
-      prev.map((event) =>
-        event.id === eventId
-          ? { ...event, rsvp: event.rsvp === response ? null : response }
-          : event,
-      ),
+      prev.map((e) => {
+        if (e.id !== eventId) return e;
+        if (response === "notGoing") {
+          return {
+            ...e,
+            rsvp: "notGoing" as const,
+            rsvpPlayerId: null,
+            rsvpPlayerName: null,
+            rsvpPlayerFirstName: null,
+          };
+        }
+        const p = players.find((x) => x.id === playerId);
+        const firstName = p?.name ? p.name.split(" ")[0] ?? p.name : null;
+        return {
+          ...e,
+          rsvp: "going" as const,
+          rsvpPlayerId: playerId,
+          rsvpPlayerName: p?.name ?? null,
+          rsvpPlayerFirstName: firstName,
+        };
+      }),
     );
   };
 
   // Logic: Filter the events based on state
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
-      const matchCoach = event.coachName
-        .toLowerCase()
-        .includes(filters.coachName.toLowerCase());
-      const matchLocation = event.location
-        .toLowerCase()
-        .includes(filters.location.toLowerCase());
+      const searchLower = filters.coachName.toLowerCase();
+      const matchCoach = !filters.coachName ||
+        event.title.toLowerCase().includes(searchLower) ||
+        event.organizedBy.toLowerCase().includes(searchLower) ||
+        event.coachName.toLowerCase().includes(searchLower);
+      const matchEventType =
+        filters.eventType === "all" ||
+        (event.eventType?.trim() ?? "") === filters.eventType;
+      const matchLocation = !filters.location || filters.location === "all" ||
+        event.location.toLowerCase().includes(filters.location.toLowerCase());
+      const matchLeague = !filters.league || filters.league === "all" ||
+        ((event as { league?: string }).league?.toLowerCase().includes(filters.league.toLowerCase()) ?? true);
+      const matchTeam = !filters.team || filters.team === "all" ||
+        event.organizedBy.toLowerCase().includes(filters.team.toLowerCase()) ||
+        event.coachName.toLowerCase().includes(filters.team.toLowerCase());
       const matchAge =
         filters.ageGroup === "All Ages" || event.ageGroup === filters.ageGroup;
-      // You can add league/team matching here as well
 
-      return matchCoach && matchLocation && matchAge;
+      return matchCoach && matchEventType && matchLocation && matchLeague && matchTeam && matchAge;
     });
   }, [events, filters]);
 
@@ -156,8 +204,21 @@ const EventsPage = () => {
         </div>
 
         {/* Events Grid */}
-        {filteredEvents.length > 0 ? (
-          <EventsGrid events={filteredEvents} onRsvp={handleRsvp} />
+        {loading ? (
+          <div className="py-20 text-center bg-secondary/10 rounded-2xl border-2 border-dashed border-white/10">
+            <p className="text-slate-400">Loading events…</p>
+          </div>
+        ) : fetchError ? (
+          <div className="py-20 text-center bg-red-500/10 rounded-2xl border-2 border-dashed border-red-500/30">
+            <p className="text-red-400 font-medium">{fetchError}</p>
+            <p className="text-slate-400 text-sm mt-2">Try signing out and back in.</p>
+          </div>
+        ) : filteredEvents.length > 0 ? (
+          <EventsGrid
+            events={filteredEvents}
+            players={players}
+            onRsvp={handleRsvp}
+          />
         ) : (
           <div className="py-20 text-center bg-secondary/10 rounded-2xl border-2 border-dashed border-white/10">
             <p className="text-slate-400">

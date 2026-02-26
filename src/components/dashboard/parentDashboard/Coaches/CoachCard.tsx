@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Star } from "lucide-react";
+import { Star, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,12 @@ export interface CoachCardProps {
   name: string;
   title?: string;
   team: string;
-  teamLogo: string;
+  teamLogo?: string;
   league?: string;
   level?: string;
   birthYear?: number;
   rating?: number;
+  reviewCount?: number;
   image: string;
   location: string;
 }
@@ -30,6 +31,7 @@ const CoachCard = ({
   level = "-",
   birthYear = 0,
   rating = 0,
+  reviewCount = 0,
   image,
 }: CoachCardProps) => {
   const router = useRouter();
@@ -51,17 +53,27 @@ const CoachCard = ({
           <p className="text-sm font-light z-100">{title}</p>
           <div className="flex items-center justify-center gap-2 mt-1 z-100">
             {/* Small Team Icon Container */}
-            {teamLogo && (
-              <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                <Image
-                  src={teamLogo}
-                  alt="Team Logo"
-                  fill
-                  sizes="20px"
-                  className="object-cover"
-                />
-              </div>
-            )}
+            <div className="w-5 h-5 rounded flex items-center justify-center shrink-0 bg-slate-600/50">
+              {teamLogo ? (
+                teamLogo.startsWith("data:") ? (
+                  <img
+                    src={teamLogo}
+                    alt="Team Logo"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <Image
+                    src={teamLogo}
+                    alt="Team Logo"
+                    width={20}
+                    height={20}
+                    className="object-contain"
+                  />
+                )
+              ) : (
+                <Shield className="w-3 h-3 text-slate-400" />
+              )}
+            </div>
             <p className="text-sm font-medium">{team}</p>
           </div>
         </div>
@@ -103,6 +115,11 @@ const CoachCard = ({
                 </div>
                 <span className="font-semibold text-sm">
                   {rating.toFixed(1)}
+                  {reviewCount > 0 && (
+                    <span className="font-normal text-gray-300 ml-1">
+                      ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
+                    </span>
+                  )}
                 </span>
               </div>
             </div>

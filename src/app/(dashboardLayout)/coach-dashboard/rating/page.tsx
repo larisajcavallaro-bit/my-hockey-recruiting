@@ -1,18 +1,64 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Search, BarChart2, ChevronRight } from "lucide-react";
 import { PlayerRequestRow } from "@/components/dashboard/coachDashboard/Ratings/PlayerRequestRow";
 import { RatingModal } from "@/components/dashboard/coachDashboard/Ratings/RatingModal";
 
+interface PendingRequest {
+  id: string;
+  playerId: string;
+  playerName: string;
+  requesterName: string;
+  status: string;
+  createdAt: string;
+}
+
+function formatRequested(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return d.toLocaleDateString();
+}
+
 export default function RatingsDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<PendingRequest | null>(null);
+  const [players, setPlayers] = useState<PendingRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const players = [
-    { id: 1, name: "Alex Johnson", requester: "Robert Johnson" },
-    { id: 2, name: "Marcus Smith", requester: "Sarah Smith" },
-    { id: 3, name: "Sarah Jenkins", requester: "Mike Jenkins" },
-  ];
+  const fetchRequests = () => {
+    setLoading(true);
+    fetch("/api/rating-requests?status=pending")
+      .then((r) => (r.ok ? r.json() : { requests: [] }))
+      .then((data) => {
+        setPlayers(
+          (data.requests ?? []).map((r: Record<string, unknown>) => ({
+            id: r.id,
+            playerId: r.playerId,
+            playerName: r.playerName ?? "Player",
+            requesterName: r.requesterName ?? "Parent",
+            status: r.status ?? "pending",
+            createdAt: r.createdAt ?? "",
+          }))
+        );
+      })
+      .catch(() => setPlayers([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchRequests());
+  }, []);
+
+  const filtered = players.filter((p) =>
+    (p.playerName ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const pendingCount = players.length;
 
   return (
     <div className="min-h-screen ">
@@ -41,18 +87,21 @@ export default function RatingsDashboard() {
           </div>
 
           <div className="space-y-3">
-            {players
-              .filter((p) =>
-                p.name.toLowerCase().includes(searchTerm.toLowerCase()),
-              )
-              .map((player) => (
+            {loading ? (
+              <p className="text-sub-text1 py-4">Loading...</p>
+            ) : filtered.length === 0 ? (
+              <p className="text-sub-text1 py-4">No pending rating requests.</p>
+            ) : (
+              filtered.map((p) => (
                 <PlayerRequestRow
-                  key={player.id}
-                  name={player.name}
-                  requester={player.requester}
-                  onRateClick={() => setSelectedPlayer(player.name)}
+                  key={p.id}
+                  name={p.playerName}
+                  requester={p.requesterName}
+                  requestedDate={formatRequested(p.createdAt)}
+                  onRateClick={() => setSelectedRequest(p)}
                 />
-              ))}
+              ))
+            )}
           </div>
 
           <div className="mt-10 bg-secondary border border-blue-100 p-6 flex items-center justify-between">
@@ -70,15 +119,20 @@ export default function RatingsDashboard() {
               </div>
             </div>
             <div className="bg-white px-5 py-2.5 rounded-xl text-sm font-black text-slate-800 shadow-sm border border-blue-50 flex items-center gap-2">
-              4 Pending <ChevronRight size={16} className="text-blue-500" />
+              {pendingCount} Pending <ChevronRight size={16} className="text-blue-500" />
             </div>
           </div>
         </div>
       </div>
       <RatingModal
-        isOpen={!!selectedPlayer}
-        onClose={() => setSelectedPlayer(null)}
-        playerName={selectedPlayer || ""}
+        isOpen={!!selectedRequest}
+        onClose={() => setSelectedRequest(null)}
+        onSuccess={() => {
+          setSelectedRequest(null);
+          fetchRequests();
+        }}
+        playerId={selectedRequest?.playerId ?? ""}
+        playerName={selectedRequest?.playerName ?? ""}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import CoachCard, {
   CoachCardProps,
@@ -8,60 +8,35 @@ import CoachCard, {
 
 import CoachesFilterBar from "@/components/dashboard/parentDashboard/Coaches/CoachesFilterBar";
 
-const COACHES = [
-  {
-    id: "coash1",
-    name: "Jake Thompson",
-    title: "Head Coach",
-    team: "Vegas Golden Knights",
-    teamLogo: "/newasset/parent/coaches/coaches.png",
-    league: "Elite League",
-    level: "Pro",
-    birthYear: 1990,
-    rating: 4.9,
-    image: "/newasset/parent/coaches/coaches.png",
-    location: "Las Vegas, NV",
-  },
-  {
-    id: "coash2",
-    name: "Sarah Johnson",
-    title: "Head Coach",
-    team: "Toronto Stars",
-    teamLogo: "/newasset/parent/coaches/coaches.png",
-    league: "Ontario League",
-    level: "AA",
-    birthYear: 1985,
-    rating: 4.6,
-    image: "/newasset/parent/coaches/coaches.png",
-    location: "Toronto, ON",
-  },
-  {
-    id: "coash3",
-    name: "Mark Stevens",
-    title: "Assistant Coach",
-    team: "Maple Leafs II",
-    teamLogo: "/newasset/parent/coaches/coaches.png",
-    league: "Local League",
-    level: "AAA",
-    birthYear: 1978,
-    rating: 4.2,
-    image: "/newasset/parent/coaches/coaches.png",
-    location: "Toronto, ON",
-  },
-  {
-    id: "coash4",
-    name: "Nadib Stevens",
-    title: "Assistant Coach",
-    team: "Maple Leafs II",
-    teamLogo: "/newasset/parent/coaches/coaches.png",
-    league: "Local League",
-    level: "AAA",
-    birthYear: 1978,
-    rating: 4.2,
-    image: "/newasset/parent/coaches/coaches.png",
-    location: "Toronto, ON",
-  },
-] satisfies CoachCardProps[];
+function mapToCoachCard(c: {
+  id: string;
+  user: { name: string | null };
+  title?: string | null;
+  team?: string | null;
+  teamLogo?: string | null;
+  league?: string | null;
+  level?: string | null;
+  birthYear?: number | null;
+  location?: string | null;
+  image?: string | null;
+  rating?: number | null;
+  reviewCount?: number;
+}): CoachCardProps {
+  return {
+    id: c.id,
+    name: c.user?.name ?? "Coach",
+    title: c.title ?? undefined,
+    team: c.team ?? "-",
+    teamLogo: c.teamLogo ?? "",
+    league: c.league ?? undefined,
+    level: c.level ?? undefined,
+    birthYear: c.birthYear ?? undefined,
+    rating: c.rating ?? 0,
+    reviewCount: c.reviewCount ?? 0,
+    image: c.image ?? "/newasset/parent/coaches/coaches.png",
+    location: c.location ?? "-",
+  };
+}
 
 export default function ParentCoachesPage() {
   const [search, setSearch] = useState("");
@@ -69,12 +44,24 @@ export default function ParentCoachesPage() {
   const [league, setLeague] = useState("all");
   const [team, setTeam] = useState("all");
   const [location, setLocation] = useState("all");
+  const [coaches, setCoaches] = useState<CoachCardProps[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = new URLSearchParams();
+    if (search) q.set("search", search);
+    fetch(`/api/coaches?${q}`, { credentials: "include", cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        setCoaches((data.coaches ?? []).map(mapToCoachCard));
+      })
+      .catch(() => setCoaches([]))
+      .finally(() => setLoading(false));
+  }, [search]);
 
   const filteredCoaches = useMemo(() => {
-    return COACHES.filter((c) => {
+    return coaches.filter((c) => {
       return (
-        (c.name.toLowerCase().includes(search.toLowerCase()) ||
-          c.team.toLowerCase().includes(search.toLowerCase())) &&
         (birthYear === "all" || String(c.birthYear) === birthYear) &&
         (league === "all" ||
           (c.league || "").toLowerCase() === league.toLowerCase()) &&
@@ -84,7 +71,7 @@ export default function ParentCoachesPage() {
           (c.location || "").toLowerCase() === location.toLowerCase())
       );
     });
-  }, [search, birthYear, league, team, location]);
+  }, [coaches, birthYear, league, team, location]);
 
   return (
     <div className="space-y-6">
@@ -111,9 +98,17 @@ export default function ParentCoachesPage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredCoaches.map((coach) => (
-          <CoachCard key={coach.id} {...coach} />
-        ))}
+        {loading ? (
+          <p className="text-sub-text1/80 col-span-2">Loading coaches...</p>
+        ) : filteredCoaches.length === 0 ? (
+          <p className="text-sub-text1/80 col-span-2">
+            No coaches found. Coaches will appear here once they create profiles.
+          </p>
+        ) : (
+          filteredCoaches.map((coach) => (
+            <CoachCard key={coach.id} {...coach} />
+          ))
+        )}
       </div>
     </div>
   );

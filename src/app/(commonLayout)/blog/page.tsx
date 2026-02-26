@@ -1,54 +1,44 @@
-import ArticleCard from "@/components/block/ArticleCard";
 import BlockBanner from "@/components/block/BlockBanner";
 import CategoryNavBar from "@/components/block/CategoryNavBar";
 import FeaturedArticle from "@/components/block/FeaturedArticle";
 import NewsletterCTA from "@/components/block/NewsletterCTA";
+import BlogPostGrid from "@/components/block/BlogPostGrid";
+import { prisma } from "@/lib/db";
 
-const articles = [
-  {
-    category: "Coaching Tips",
-    title: "Essential Team Building Strategies",
-    date: "Jan 10, 2026",
-    image: "/newasset/blog/Essential Team Building.png",
-    excerpt: "Learn how to foster teamwork and communication...",
-    author: "Coach John",
-    content:
-      "Team building is essential for success in hockey. Effective communication and trust are the foundations of a winning team.",
-  },
-  {
-    category: "Tournament News",
-    title: "Youth Hockey Tournament Season",
-    date: "Jan 8, 2026",
-    image: "/newasset/blog/Youth Hockey Tournament.png",
-    excerpt: "A comprehensive guide for hockey parents...",
-    author: "Coach Sarah",
-    content:
-      "Tournament season is here! Here are tips for parents to help their young athletes succeed.",
-  },
-  {
-    category: "Player Development",
-    title: "Goaltending Basics for Young Players",
-    date: "Jan 3, 2026",
-    image: "/newasset/blog/Goaltending Basics for Young Players.png",
-    excerpt: "An introduction to goalie-specific training...",
-    author: "Coach Mike",
-    content:
-      "Goaltending requires specialized training and technique. Let's explore the fundamentals.",
-  },
-];
+export const dynamic = "force-dynamic";
 
-export default function HockeyBlog() {
+async function getBlogPosts() {
+  try {
+    const raw = await prisma.blogPost.findMany({
+      orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],
+    });
+    const serialize = (p: (typeof raw)[number]) => ({
+      ...p,
+      publishedAt: p.publishedAt.toISOString(),
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+    });
+    const posts = raw.map(serialize);
+    const featured = posts.find((p) => p.featured) ?? null;
+    const rest = posts.filter((p) => !p.featured);
+    return { posts: rest, featured };
+  } catch {
+    return { posts: [], featured: null };
+  }
+}
+
+export default async function HockeyBlog() {
+  const { posts, featured } = await getBlogPosts();
+
   return (
     <main className="bg-gray-50 min-h-screen pb-20">
+      <div className="w-full bg-amber-500 text-slate-900 py-3 px-4 text-center font-semibold text-lg shadow-md">
+        Coming Soon — Blog posts are on the way. Check back soon!
+      </div>
       <BlockBanner />
       <CategoryNavBar />
-      <FeaturedArticle />
-
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {articles.map((art, i) => (
-          <ArticleCard key={i} {...art} />
-        ))}
-      </div>
+      <FeaturedArticle post={featured} />
+      <BlogPostGrid posts={posts} />
 
       <NewsletterCTA />
     </main>

@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, User, CalendarDays } from "lucide-react";
+import { CheckCircle2, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 

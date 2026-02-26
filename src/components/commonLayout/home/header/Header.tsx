@@ -2,21 +2,53 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import React, { useState } from "react";
-import { Menu, User, X } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Menu, User, LogOut, X } from "lucide-react";
 import logo from "../../../../../public/newasset/auth/logo.png";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useSession, signOut } from "next-auth/react";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const pathname = usePathname();
-  const user = false;
+  const { data: session, status } = useSession();
+  const isLoggedIn = status === "authenticated" && !!session?.user;
+  const role = (session?.user as { role?: string })?.role;
+  const coachProfileId = (session?.user as { coachProfileId?: string | null })?.coachProfileId;
+  const dashboardPath = role === "COACH" ? "/coach-dashboard" : "/parent-dashboard";
+
+  const fetchProfileImage = useCallback(() => {
+    if (!isLoggedIn) return;
+    if (role === "COACH" && coachProfileId) {
+      fetch(`/api/coaches/${coachProfileId}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.error && (data.image || data.user?.image)) {
+            setProfileImage(data.image ?? data.user?.image ?? null);
+          }
+        })
+        .catch(() => {});
+    } else if (role === "PARENT") {
+      fetch("/api/profile")
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.error && data.image) setProfileImage(data.image);
+        })
+        .catch(() => {});
+    }
+  }, [isLoggedIn, role, coachProfileId]);
+
+  useEffect(() => {
+    fetchProfileImage();
+  }, [fetchProfileImage]);
 
   const navLinks = [
     { name: "Home", path: "/" },
-    { name: "Facilities", path: "/facilities" },
-    { name: "Subscription", path: "/subscription" },
+    { name: "Training", path: "/training" },
+    { name: "Teams and Schools", path: "/teams-and-schools" },
+    ...(role === "COACH" ? [] : [{ name: "Subscription", path: "/subscription" }]),
     { name: "Contact", path: "/contact-us" },
     { name: "Blog", path: "/blog" },
   ];
@@ -50,14 +82,41 @@ const Header = () => {
         </div>
 
         {/* Desktop Right */}
-        {user ? (
-          <div className="hidden lg:flex items-end gap-3">
+        {isLoggedIn ? (
+          <div className="hidden lg:flex items-center gap-3">
             <Link
-              href="/dashboard"
-              className="text-sm font-medium bg-primary p-3 rounded-full"
+              href={dashboardPath}
+              className="flex items-center gap-2 text-sm font-medium hover:underline"
             >
-              <User />
+              {profileImage ? (
+                profileImage.startsWith("data:") ? (
+                  <img
+                    src={profileImage}
+                    alt="Profile"
+                    className="w-9 h-9 rounded-full border-2 border-primary/50 object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={profileImage}
+                    alt="Profile"
+                    width={36}
+                    height={36}
+                    className="rounded-full border-2 border-primary/50 object-cover w-9 h-9"
+                  />
+                )
+              ) : (
+                <span className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
+                  <User className="w-4 h-4" />
+                </span>
+              )}
+              My Dashboard
             </Link>
+            <button
+              onClick={() => signOut()}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition"
+            >
+              Sign Out
+            </button>
           </div>
         ) : (
           <div className="hidden lg:flex items-center space-x-4">
@@ -120,13 +179,45 @@ const Header = () => {
           })}
 
           {/* Mobile user menu */}
-          {user ? (
-            <Link
-              href="/auth/sign-in"
-              className="text-sm font-medium hover:underline"
-            >
-              Account
-            </Link>
+          {isLoggedIn ? (
+            <div className="flex flex-col gap-3 pt-4 border-t border-white/20">
+              <Link
+                href={dashboardPath}
+                className="flex items-center gap-2 text-foreground text-lg font-medium hover:text-primary transition"
+                onClick={() => setIsOpen(false)}
+              >
+                {profileImage ? (
+                  profileImage.startsWith("data:") ? (
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full border-2 border-primary/50 object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={profileImage}
+                      alt="Profile"
+                      width={32}
+                      height={32}
+                      className="rounded-full border-2 border-primary/50 object-cover"
+                    />
+                  )
+                ) : (
+                  <User className="w-5 h-5" />
+                )}
+                My Dashboard
+              </Link>
+              <button
+                onClick={() => {
+                  signOut();
+                  setIsOpen(false);
+                }}
+                className="flex items-center gap-2 text-foreground text-lg font-medium hover:text-primary transition text-left"
+              >
+                <LogOut className="w-5 h-5" />
+                Sign Out
+              </button>
+            </div>
           ) : (
             <div className="flex flex-col lg:hidden gap-5 space-x-4">
               <Link

@@ -3,9 +3,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Mail, Phone } from "lucide-react";
 import Link from "next/link";
-import { LocationLink } from "@/components/ui/LocationLink";
-
-const contactAddress = "123 Industrial Blvd, Safety City, SC 12345, United States";
 
 export default function ContactInformation() {
   const contactDetails = [
@@ -13,15 +10,15 @@ export default function ContactInformation() {
       title: "Email Us",
       description: "Send us an email anytime",
       icon: Mail,
-      highlight: "support@onschedule.ca",
-      link: "mailto:support@onschedule.ca",
+      highlight: "support@myhockeyrecruiting.com",
+      link: "mailto:support@myhockeyrecruiting.com",
     },
     {
       title: "Call Us",
       description: "Mon–Fri, 9AM–5PM EST",
       icon: Phone,
-      highlight: "+1 (800) CRANE-01",
-      link: "tel:+18002726301",
+      highlight: "Contact via Help Center form",
+      link: "/contact-us",
     },
   ];
 
@@ -64,9 +61,11 @@ export default function ContactInformation() {
             <h3 className="font-semibold text-base">Visit Us</h3>
           </div>
           <p className="text-sm text-muted-foreground">
-            Click for directions to our office
+            Use the contact form for inquiries
           </p>
-          <LocationLink address={contactAddress} />
+          <Link href="/contact-us" className="text-primary font-medium hover:underline">
+            Go to Help Center
+          </Link>
         </CardContent>
       </Card>
     </div>

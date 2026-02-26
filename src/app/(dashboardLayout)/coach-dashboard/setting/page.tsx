@@ -16,6 +16,9 @@ export default function SettingsPage() {
         <p className="text-sub-text1/80 font-medium">
           Manage your account settings and preferences
         </p>
+        <p className="mt-3 text-sm font-semibold text-green-600 bg-green-50 px-4 py-2 rounded-lg inline-block">
+          COACH PROFILES ARE ALWAYS FREE — no subscription needed.
+        </p>
       </div>
 
       {/* Tabs */}
@@ -44,9 +47,6 @@ export default function SettingsPage() {
         <TabsContent value="security">
           <SecuritySettings />
         </TabsContent>
-
-        {/* Subscription Tab */}
-        <TabsContent value="subscription"></TabsContent>
       </Tabs>
     </div>
   );

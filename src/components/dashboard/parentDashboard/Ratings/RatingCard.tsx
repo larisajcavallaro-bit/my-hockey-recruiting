@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 
 export interface CoachRating {
   id: string;
+  playerId?: string;
   coachName: string;
   playerName: string;
   coachImage: string;
@@ -20,7 +22,7 @@ interface RatingCardProps {
   rating: CoachRating;
 }
 
-const statusStyles = {
+const statusStyles: Record<string, { badge: string; icon: typeof Clock; label: string }> = {
   waiting: {
     badge: "bg-yellow-400 text-yellow-900",
     icon: AlertCircle,
@@ -32,15 +34,35 @@ const statusStyles = {
     label: "Completed",
   },
   pending: {
-    badge: "bg-blue-500 text-white",
+    badge: "bg-amber-100 text-amber-800 border border-amber-200",
     icon: Clock,
     label: "Pending",
   },
 };
 
 export const RatingCard = ({ rating }: RatingCardProps) => {
-  const statusConfig = statusStyles[rating.status];
+  const statusConfig = statusStyles[rating.status] ?? statusStyles.pending;
   const StatusIcon = statusConfig.icon;
+
+  const statusBadge =
+    rating.status === "completed" && rating.playerId ? (
+      <Link
+        href={`/parent-dashboard/players/${rating.playerId}`}
+        className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 whitespace-nowrap rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors text-[10px] sm:text-xs font-semibold"
+      >
+        <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        Completed - View Review
+      </Link>
+    ) : (
+      <Badge
+        className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 whitespace-nowrap ${statusConfig.badge}`}
+      >
+        <StatusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <span className="text-[10px] sm:text-xs font-semibold">
+          {statusConfig.label}
+        </span>
+      </Badge>
+    );
 
   return (
     <Card className="border-none bg-slate-700/60 hover:bg-slate-700/80 transition-all overflow-hidden">
@@ -50,7 +72,7 @@ export const RatingCard = ({ rating }: RatingCardProps) => {
           <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
             <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0">
               <Image
-                src={rating.coachImage}
+                src={rating.coachImage ?? "/newasset/parent/coaches/coaches.png"}
                 alt={rating.coachName}
                 fill
                 className="rounded-full object-cover"
@@ -74,18 +96,11 @@ export const RatingCard = ({ rating }: RatingCardProps) => {
                 ⏱ Requested
               </p>
               <p className="text-slate-300 text-xs sm:text-sm">
-                {rating.daysAgo} days ago
+                {rating.requestedDate}
               </p>
             </div>
 
-            <Badge
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 whitespace-nowrap ${statusConfig.badge}`}
-            >
-              <StatusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="text-[10px] sm:text-xs font-semibold">
-                {statusConfig.label}
-              </span>
-            </Badge>
+            {statusBadge}
           </div>
         </div>
       </CardContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays } from "lucide-react";
@@ -15,37 +15,45 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-const EVENTS = [
-  {
-    id: 1,
-    title: "AAA Tryouts - 2012 Birth Year",
-    date: "Jan 15, 2026",
-    person: "Jake",
-    status: "Confirmed",
-  },
-  {
-    id: 2,
-    title: "Skills Development Camp",
-    date: "Jan 20, 2026",
-    person: "Cav",
-    status: "Interested",
-  },
-  {
-    id: 3,
-    title: "Elite Summer Camp",
-    date: "Feb 02, 2026",
-    person: "Noah",
-    status: "Confirmed",
-  },
-];
+interface UpcomingEvent {
+  id: string;
+  title: string;
+  date: string;
+  person: string;
+  status: string;
+}
 
 const statusStyles: Record<string, string> = {
   Confirmed: "bg-blue-100 text-blue-600",
-  Interested: "bg-slate-100 text-slate-600",
 };
+
+const fetchUpcoming = () =>
+  fetch("/api/events/upcoming")
+    .then((r) => (r.ok ? r.json() : { events: [] }))
+    .then((res) => res.events ?? [])
+    .catch(() => []);
 
 const UpcomingEventsCardDashboard = () => {
   const [open, setOpen] = useState(false);
+  const [events, setEvents] = useState<UpcomingEvent[]>([]);
+
+  useEffect(() => {
+    fetchUpcoming().then(setEvents);
+  }, []);
+
+  // Refetch when user returns to this page/tab (e.g. after changing RSVP on Events page)
+  useEffect(() => {
+    const onFocus = () => fetchUpcoming().then(setEvents);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") onFocus();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
 
   return (
     <div className="space-y-4 mt-10">
@@ -72,7 +80,7 @@ const UpcomingEventsCardDashboard = () => {
               </DialogHeader>
 
               <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-                {EVENTS.map((event) => (
+                {events.map((event) => (
                   <Card key={event.id} className="bg-secondary-foreground/10">
                     <CardContent className="py-4">
                       <div className="flex items-start justify-between gap-3">
@@ -121,7 +129,7 @@ const UpcomingEventsCardDashboard = () => {
 
         {/* DASHBOARD PREVIEW — SAME AS COACH CARD */}
         <div className="space-y-3">
-          {EVENTS.slice(0, 2).map((event) => (
+          {events.slice(0, 2).map((event) => (
             <Card key={event.id} className="bg-secondary-foreground/10">
               <CardContent>
                 <div className="flex items-start justify-between gap-3">

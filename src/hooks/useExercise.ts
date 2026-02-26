@@ -14,11 +14,13 @@ export const useExercise = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
 
   useEffect(() => {
-    const foundExercise = getExerciseData.find(ex => ex.id === exerciseId);
-    if (foundExercise) {
-      setExercise(foundExercise);
-      setQuestions([...foundExercise.questions]);
-    }
+    void Promise.resolve().then(() => {
+      const foundExercise = getExerciseData.find(ex => ex.id === exerciseId);
+      if (foundExercise) {
+        setExercise(foundExercise);
+        setQuestions([...foundExercise.questions]);
+      }
+    });
   }, [exerciseId]);
 
   const currentQuestion = questions[currentQuestionIndex];

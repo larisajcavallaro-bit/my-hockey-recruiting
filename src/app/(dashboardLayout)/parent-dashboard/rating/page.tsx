@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
+import FeatureGate from "@/components/subscription/FeatureGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,50 +12,62 @@ import {
 import { RatingRequestModal } from "@/components/dashboard/parentDashboard/Ratings/RatingRequestModal";
 import Image from "next/image";
 
+function formatRequestedDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return d.toLocaleDateString();
+}
+
 export default function RatingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [ratings] = useState<CoachRating[]>([
-    {
-      id: "1",
-      coachName: "Coach Sarah Jenkins",
-      playerName: "Leo Junior",
-      coachImage: "/newasset/parent/coaches/coaches.png",
-      requestedDate: "2 days ago",
-      daysAgo: 2,
-      status: "waiting",
-    },
-    {
-      id: "2",
-      coachName: "Coach Sarah Jenkins",
-      playerName: "Leo Junior",
-      coachImage: "/newasset/event/demoLogo1.png",
-      requestedDate: "2 days ago",
-      daysAgo: 2,
-      status: "waiting",
-    },
-    {
-      id: "3",
-      coachName: "Coach Sarah Jenkins",
-      playerName: "Leo Junior",
-      coachImage: "/newasset/parent/coaches/coaches.png",
-      requestedDate: "2 days ago",
-      daysAgo: 2,
-      status: "waiting",
-    },
-    {
-      id: "4",
-      coachName: "Coach Sarah Jenkins",
-      playerName: "Larisa Junior",
-      coachImage: "/newasset/parent/coaches/coaches.png",
-      requestedDate: "2 days ago",
-      daysAgo: 2,
-      status: "waiting",
-    },
-  ]);
+  const [ratings, setRatings] = useState<CoachRating[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRatings = () => {
+    setLoading(true);
+    fetch("/api/rating-requests")
+      .then((r) => (r.ok ? r.json() : { requests: [] }))
+      .then((data) => {
+        const requests = data.requests ?? [];
+        setRatings(
+          requests.map((r: Record<string, unknown>) => {
+            const createdAt = r.createdAt as string;
+            const d = new Date(createdAt);
+            const now = new Date();
+            const diffDays = Math.floor(
+              (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            return {
+              id: r.id as string,
+              playerId: r.playerId as string | undefined,
+              coachName: r.coachName as string,
+              playerName: r.playerName as string,
+              coachImage:
+                (r.coachImage as string) ??
+                "/newasset/parent/coaches/coaches.png",
+              requestedDate: formatRequestedDate(createdAt),
+              daysAgo: diffDays,
+              status: (r.status as "pending" | "completed") ?? "pending",
+            };
+          })
+        );
+      })
+      .catch(() => setRatings([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchRatings());
+  }, []);
 
   const filteredRatings = ratings.filter((rating) =>
-    rating.playerName.toLowerCase().includes(searchQuery.toLowerCase()),
+    rating.playerName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -66,16 +79,25 @@ export default function RatingsPage() {
             Coach Ratings & Requests
           </h1>
           <p className="text-sub-text1/80 font-medium">
-            Track and manage your child's feedback requests
+            Track and manage your child&apos;s feedback requests
           </p>
         </div>
 
-        <Button
-          className="bg-button-clr1 hover:bg-blue-700 text-white font-semibold px-4 py-2.5"
-          onClick={() => setIsModalOpen(true)}
+        <FeatureGate
+          feature="coach_evaluations"
+          fallback={
+            <p className="text-sm text-orange-600 font-extrabold">
+              Upgrade to Elite for Player Evaluations (Request private feedback).
+            </p>
+          }
         >
-          + Request New Rating
-        </Button>
+          <Button
+            className="bg-button-clr1 hover:bg-blue-700 text-white font-semibold px-4 py-2.5"
+            onClick={() => setIsModalOpen(true)}
+          >
+            + Request New Rating
+          </Button>
+        </FeatureGate>
       </div>
 
       {/* Search & Avatars Section */}
@@ -102,7 +124,8 @@ export default function RatingsPage() {
                 <Image
                   src={rating.coachImage}
                   alt={rating.coachName}
-                  fill
+                  width={40}
+                  height={40}
                   className="object-cover"
                 />
               </div>
@@ -118,13 +141,17 @@ export default function RatingsPage() {
 
       {/* Ratings List */}
       <div className="space-y-4">
-        {filteredRatings.length > 0 ? (
+        {loading ? (
+          <p className="text-center py-12 text-sub-text1">Loading...</p>
+        ) : filteredRatings.length > 0 ? (
           filteredRatings.map((rating) => (
             <RatingCard key={rating.id} rating={rating} />
           ))
         ) : (
           <div className="text-center py-12">
-            <p className="text-slate-400 text-lg">No ratings found</p>
+            <p className="text-white text-lg">
+              No ratings found. Request a coach to rate your player above.
+            </p>
           </div>
         )}
       </div>
@@ -133,6 +160,7 @@ export default function RatingsPage() {
       <RatingRequestModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchRatings}
       />
     </div>
   );

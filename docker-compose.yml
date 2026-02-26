@@ -1,0 +1,18 @@
+# Local PostgreSQL for My Hockey Recruiting
+# Run: docker compose up -d
+# Then: DATABASE_URL=postgresql://mhr:mhr@localhost:5432/mhr npm run db:push
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mhr
+      POSTGRES_PASSWORD: mhr
+      POSTGRES_DB: mhr
+    ports:
+      - "5432:5432"
+    volumes:
+      - mhr_pgdata:/var/lib/postgresql/data
+
+volumes:
+  mhr_pgdata: {}

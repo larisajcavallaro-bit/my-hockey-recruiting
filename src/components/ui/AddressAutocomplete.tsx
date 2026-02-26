@@ -9,20 +9,31 @@ declare global {
   }
 }
 
+export interface PlaceResult {
+  address: string;
+  lat: number;
+  lng: number;
+}
+
 interface AddressAutocompleteProps {
   defaultValue?: string;
   onChange?: (address: string) => void;
+  onPlaceSelect?: (place: PlaceResult) => void;
   placeholder?: string;
   className?: string;
   id?: string;
+  /** Places API types: "address" (default), "geocode" (addresses + cities), "(regions)" for cities only */
+  types?: string[];
 }
 
 export function AddressAutocomplete({
   defaultValue = "",
   onChange,
+  onPlaceSelect,
   placeholder = "Start typing an address...",
   className = "",
   id = "address-autocomplete",
+  types = ["address"],
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -33,14 +44,14 @@ export function AddressAutocomplete({
     if (!key) return;
 
     if (window.google?.maps?.places) {
-      setIsLoaded(true);
+      void Promise.resolve().then(() => setIsLoaded(true));
       return;
     }
 
     const existing = document.getElementById("google-maps-script");
     if (existing) {
       if (window.google?.maps?.places) {
-        setIsLoaded(true);
+        void Promise.resolve().then(() => setIsLoaded(true));
       } else {
         (existing as HTMLScriptElement).addEventListener("load", () =>
           setIsLoaded(true)
@@ -67,8 +78,8 @@ export function AddressAutocomplete({
 
     const input = inputRef.current;
     const autocomplete = new google.maps.places.Autocomplete(input, {
-      types: ["address"],
-      fields: ["formatted_address", "name", "address_components"],
+      types,
+      fields: ["formatted_address", "geometry", "name", "address_components"],
     });
 
     autocompleteRef.current = autocomplete;
@@ -76,6 +87,14 @@ export function AddressAutocomplete({
       const place = autocomplete.getPlace();
       const address = place.formatted_address || "";
       if (address && onChange) onChange(address);
+      const loc = place.geometry?.location;
+      if (address && loc && onPlaceSelect) {
+        onPlaceSelect({
+          address,
+          lat: loc.lat(),
+          lng: loc.lng(),
+        });
+      }
     });
 
     return () => {
@@ -84,7 +103,7 @@ export function AddressAutocomplete({
         autocompleteRef.current = null;
       }
     };
-  }, [isLoaded, onChange]);
+  }, [isLoaded, onChange, onPlaceSelect, types]);
 
   return (
     <input

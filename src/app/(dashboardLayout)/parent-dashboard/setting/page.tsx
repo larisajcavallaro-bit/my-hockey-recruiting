@@ -1,13 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NotificationPreferences from "@/components/dashboard/parentDashboard/Settings/NotificationPreferences";
 import SecuritySettings from "@/components/dashboard/parentDashboard/Settings/SecuritySettings";
 import SubscriptionSettings from "@/components/dashboard/parentDashboard/Settings/SubscriptionSettings";
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("notifications");
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      const tab = searchParams.get("tab");
+      if (tab === "subscription") setActiveTab("subscription");
+      if (searchParams.get("success") === "1" && tab === "subscription") {
+        toast.success("Subscription activated! Your plan is now active.");
+      }
+    });
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen p-8">

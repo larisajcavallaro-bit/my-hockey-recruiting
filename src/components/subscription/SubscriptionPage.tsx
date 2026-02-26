@@ -1,18 +1,30 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, ReactNode, useState } from "react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 import SubscriptionCard from "./SubscriptionCard";
 import SubscriptionLasttwoCard from "./SubscriptionLasttwoCard";
+import { useSubscriptionFeatures } from "@/hooks/useSubscriptionFeatures";
+import {
+  FreeTierIcon,
+  GoldTierIcon,
+  EliteTierIcon,
+  FamilyGoldTierIcon,
+  FamilyEliteTierIcon,
+} from "./SubscriptionTierIcons";
 
 interface Feature {
   name: string;
   included: boolean;
+  subFeatures?: string[];
 }
 
 interface Plan {
   id: string;
   planName: string;
-  icon: string;
+  icon: ReactNode;
   price: number | string;
   annualPrice?: number;
   period?: string;
@@ -27,39 +39,69 @@ interface Plan {
 }
 
 const SubscriptionPage: FC = () => {
+  const { data: session, status } = useSession();
+  const role = (session?.user as { role?: string })?.role;
+  const isCoach = status === "authenticated" && role === "COACH";
+
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">(
     "monthly",
   );
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+  const { planId: currentPlanId } = useSubscriptionFeatures();
+
+  if (isCoach) {
+    return (
+      <div className="bg-gray-50/50 py-6 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-sm p-8 sm:p-12 max-w-xl text-center">
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+              COACH PROFILES ARE ALWAYS FREE
+            </h1>
+            <p className="text-gray-600">
+              You don&apos;t need a subscription. Your coach profile has full access at no cost.
+            </p>
+          </div>
+          <Link
+            href="/coach-dashboard"
+            className="inline-flex items-center justify-center rounded-lg bg-button-clr1 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition"
+          >
+            Go to Coach Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const plans: Plan[] = [
     {
       id: "free",
       planName: "Free Profile",
-      icon: "👥",
+      icon: <FreeTierIcon />,
       price: "Free",
       description: "Platform exploration only.",
       isFree: true,
-      isCurrentPlan: true,
+      isCurrentPlan: currentPlanId === "free",
       features: [
         { name: "Profile photo", included: true },
         { name: "First name + last initial", included: true },
         { name: "Birth year", included: true },
-        { name: "Current learn name", included: true },
+        { name: "Current league name", included: true },
+        { name: "Request to add training locations", included: true },
         {
-          name: "Student facilities (admin-approved required)",
+          name: "View-only access to",
           included: true,
+          subFeatures: [
+            "Coach profiles (no limit)",
+            "Training directory (no reviews)",
+          ],
         },
-        { name: "View-only access to", included: true },
-        { name: "Coach profiles (No limited)", included: true },
-        { name: "Facilities directory (No reviews)", included: true },
-        { name: "Exams (No limit)", included: true },
       ],
       buttonText: "Start with Free",
     },
     {
       id: "gold",
       planName: "Gold Profile",
-      icon: "🥇",
+      icon: <GoldTierIcon />,
       price: 3.99,
       annualPrice: 33.99,
       period: "month",
@@ -67,27 +109,19 @@ const SubscriptionPage: FC = () => {
       savings: "$33.99 billed annually",
       features: [
         { name: "Everything in Free, plus", included: true },
-        { name: "Public searchable profile", included: true },
-        {
-          name: "First name + last initial (in full list name)",
-          included: true,
-        },
         { name: "Level visibility", included: true },
-        { name: "Public profile visibility", included: true },
         { name: "Coach verification eligibility", included: true },
-        { name: "Submit facilities (admin-approved)", included: true },
-        { name: "Facility reviews (Graders + view)", included: true },
-        { name: "Correct requests (player - coach)", included: true },
-        { name: "Pro access", included: false },
-        { name: "Coach ratings", included: false },
-        { name: "Social media links", included: false },
+        { name: "Training location reviews (read & write)", included: true },
+        { name: "Review Schools & Programs", included: true },
+        { name: "Contact requests between coaches and players", included: true },
       ],
       buttonText: "Start with Gold",
+      isCurrentPlan: currentPlanId === "gold",
     },
     {
       id: "elite",
-      planName: " Elite Profile",
-      icon: "💎",
+      planName: "Elite Profile",
+      icon: <EliteTierIcon />,
       price: 5.99,
       annualPrice: 59.99,
       period: "month",
@@ -98,24 +132,19 @@ const SubscriptionPage: FC = () => {
       features: [
         { name: "Everything in Gold, plus", included: true },
         { name: "Full last name visibility", included: true },
-        { name: "Higher stats (position-based)", included: true },
-        { name: "Coach ratings (aggregated-anonymous)", included: true },
-        { name: "Coach evaluations (request-only)", included: true },
+        { name: "Show Season Stats (Player & Goalie)", included: true },
+        { name: "Coach Ratings (Anonymously rate your coach)", included: true },
+        { name: "Player Evaluations (Request private feedback)", included: true },
         { name: "Social media links", included: true },
-        { name: "Highest priority in coach search results", included: true },
-        {
-          name: "Expanded profile visibility (location + level-content)",
-          included: true,
-        },
-        { name: "Profile sharing", included: false },
-        { name: "Advanced analytics", included: false },
+        { name: "Highest priority on View Players page", included: true },
       ],
       buttonText: "Start with Elite",
+      isCurrentPlan: currentPlanId === "elite",
     },
     {
       id: "familyGold",
       planName: "Family Gold",
-      icon: "👨‍👧‍👧",
+      icon: <FamilyGoldTierIcon />,
       price: 9.99,
       annualPrice: 99.99,
       period: "month",
@@ -131,11 +160,12 @@ const SubscriptionPage: FC = () => {
         { name: "All Gold features for up to 6 players", included: true },
       ],
       buttonText: "Start with Family Gold",
+      isCurrentPlan: currentPlanId === "familyGold",
     },
     {
       id: "familyElite",
       planName: "Family Elite",
-      icon: "👩‍👩‍👦‍👦",
+      icon: <FamilyEliteTierIcon />,
       price: 14.99,
       annualPrice: 149.99,
       period: "month",
@@ -151,12 +181,36 @@ const SubscriptionPage: FC = () => {
         { name: "All Elite features for up to 6 players", included: true },
       ],
       buttonText: "Start with Family Elite",
+      isCurrentPlan: currentPlanId === "familyElite",
     },
   ];
 
-  const handlePlanSelect = (planId: string) => {
-    console.log(`Selected plan: ${planId}`);
-    // Add your navigation or API call logic here
+  const handlePlanSelect = async (planId: string) => {
+    if (planId === "free") return;
+
+    setLoadingPlanId(planId);
+    try {
+      const res = await fetch("/api/subscription/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId, billingPeriod }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error ?? "Failed to start checkout");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL received");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoadingPlanId(null);
+    }
   };
 
   return (
@@ -232,6 +286,7 @@ const SubscriptionPage: FC = () => {
                   badge={plan.badge}
                   savings={displaySavings}
                   onButtonClick={() => handlePlanSelect(plan.id)}
+                  isLoading={loadingPlanId === plan.id}
                 />
               );
             })}
@@ -263,6 +318,8 @@ const SubscriptionPage: FC = () => {
                   buttonText={plan.buttonText}
                   savings={displaySavings}
                   onButtonClick={() => handlePlanSelect(plan.id)}
+                  isLoading={loadingPlanId === plan.id}
+                  isCurrentPlan={plan.isCurrentPlan}
                 />
               );
             })}

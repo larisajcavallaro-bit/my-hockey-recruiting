@@ -84,9 +84,13 @@ body {
   --color-button-clr1: var(--button-clr1);
 
   /* card color */
-  --color-card-background-clr: var(--card-foreground) /* Navigation */
-    --color-nav-background: var(--nav-background);
-  --color-nav-background2: var(--nav-background2); /* Typography & Foreground */
+  --color-card-background-clr: var(--card-foreground);
+
+  /* Navigation */
+  --color-nav-background: var(--nav-background);
+  --color-nav-background2: var(--nav-background2);
+
+  /* Typography & Foreground */
 
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -167,7 +171,7 @@ body {
   /* Cards & Popovers */
   --card-background-clr: oklch(1 0 0 / 90.2%);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0 0);
 
   /* text color */
   --sub-text2: oklch(0.78 0.14 250);

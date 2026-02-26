@@ -1,9 +1,9 @@
 /**
- * Official facility/training categories for the Facilities page.
- * Use this as the source of truth for filters, add facility form, and any
- * facility-related dropdowns or tags.
+ * Official categories for the Training page.
+ * Use this as the source of truth for filters, add training form, and any
+ * training-related dropdowns or tags.
  *
- * Reference: List for Facilities Page (MHR Documents)
+ * Reference: List for Training Page (MHR Documents)
  */
 export const FACILITY_CATEGORIES = [
   "Real Ice",
@@ -12,10 +12,9 @@ export const FACILITY_CATEGORIES = [
   "Skating (Edgework)",
   "Skating (Power)",
   "Stick Handling",
-  "App",
-  "At Home Trainer",
-  "Tournament Teams",
   "Goalie Training",
+  "Treadmill",
+  "Off Ice",
 ] as const;
 
 export type FacilityCategory = (typeof FACILITY_CATEGORIES)[number];

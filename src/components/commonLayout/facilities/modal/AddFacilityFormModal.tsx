@@ -3,8 +3,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useState } from "react";
 import { Plus, Upload } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -34,29 +42,48 @@ import { FACILITY_CATEGORIES } from "@/constants/facilities";
 const amenitiesList = [...FACILITY_CATEGORIES];
 
 export default function AddFacilityFormModal() {
+  const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { amenities: [], website: "" },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => console.log(values);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const res = await fetch("/api/facility-submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.error ?? "Failed to submit");
+        return;
+      }
+      toast.success("Training request submitted. We will review and add it if approved.");
+      form.reset({ amenities: [], website: "" });
+      setOpen(false);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    }
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <div className="flex items-center gap-2 cursor-pointer font-medium text-sm">
-          <Plus className="w-4 h-4" /> Request to Add Facility
+          <Plus className="w-4 h-4" /> Request to Add Training
         </div>
       </DialogTrigger>
 
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-8 border-none">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">
-            Request to Add Facility
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Help others discover training facilities.
-          </p>
+          <DialogTitle className="text-2xl font-bold text-slate-900">
+            Request to Add Training
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm mt-1">
+            Help others discover training locations.
+          </DialogDescription>
         </div>
 
         <Form {...form}>
@@ -70,7 +97,7 @@ export default function AddFacilityFormModal() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-[10px] font-bold uppercase text-slate-500">
-                      Facility Name
+                      Training Name
                     </FormLabel>
                     <FormControl>
                       <Input placeholder="Arctic Ice Arena" {...field} />
@@ -187,14 +214,10 @@ export default function AddFacilityFormModal() {
                             checked={field.value?.includes(item)}
                             onCheckedChange={(c) =>
                               c
-                                ? field.onChange([
-                                    // ...field.value,
-                                    item,
-                                  ])
-                                : field
-                                    .onChange
-                                    // field.value.filter((v) => v !== item),
-                                    ()
+                                ? field.onChange([...(field.value ?? []), item])
+                                : field.onChange(
+                                    (field.value ?? []).filter((v) => v !== item)
+                                  )
                             }
                           />
                         </FormControl>
@@ -210,7 +233,7 @@ export default function AddFacilityFormModal() {
 
             <div className="border-2 border-dashed rounded-xl p-6 text-center hover:bg-slate-50 cursor-pointer transition-all group">
               <Upload className="w-5 h-5 mx-auto text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
-              <p className="text-sm font-semibold">Upload facility photos</p>
+              <p className="text-sm font-semibold">Upload training location photos</p>
             </div>
 
             <Button

@@ -7,7 +7,7 @@ export default function ParentOverviewHeading() {
         Welcome back, Parent!
       </h1>
       <p className="text-gray-600">
-        Here's an overview of your children's learning progress and activities.
+        Here&apos;s an overview of your children&apos;s learning progress and activities.
       </p>
     </div>
   );

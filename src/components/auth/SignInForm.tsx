@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
+import { signIn, getSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,20 +21,35 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string().min(1, "Password required"),
-  rememberMe: z.boolean().default(false),
+  rememberMe: z.boolean(),
 });
 
 export default function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? undefined;
+  const verifiedEmail = searchParams.get("email") ?? "";
+  const verified = searchParams.get("verified") === "1";
   const [showP, setShowP] = useState(false);
+  const [loading, setLoading] = useState(false);
   const form = useForm<z.infer<typeof schema>>({
-    defaultValues: { email: "", password: "", rememberMe: false },
+    resolver: zodResolver(schema),
+    defaultValues: {
+      email: verifiedEmail,
+      password: "",
+      rememberMe: false,
+    },
   });
+
+  useEffect(() => {
+    if (verified) {
+      toast.success("Your phone is verified! Sign in to access your portal.");
+    }
+  }, [verified]);
 
   return (
     <div
@@ -66,7 +85,49 @@ export default function SignInForm() {
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((v) => console.log(v))}
+            onSubmit={form.handleSubmit(
+              async (v) => {
+                setLoading(true);
+                try {
+                  const result = await signIn("credentials", {
+                    email: v.email.trim().toLowerCase(),
+                    password: v.password,
+                    redirect: false,
+                  });
+                  if (result?.error) {
+                    const msg =
+                      result.error === "CredentialsSignin" ||
+                      result.error === "Configuration"
+                        ? "Invalid email or password"
+                        : result.error;
+                    toast.error(msg);
+                    return;
+                  }
+                  if (result?.ok) {
+                    const session = await getSession();
+                    const url =
+                      callbackUrl ??
+                      (session?.user?.role === "ADMIN"
+                        ? "/admin-dashboard"
+                        : session?.user?.role === "COACH"
+                          ? "/coach-dashboard"
+                          : "/parent-dashboard");
+                    router.push(url ?? "/parent-dashboard");
+                    router.refresh();
+                  } else {
+                    toast.error("Sign in failed. Please try again.");
+                  }
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Sign in failed");
+                } finally {
+                  setLoading(false);
+                }
+              },
+              (errors) => {
+                const first = Object.values(errors)[0];
+                toast.error(first?.message?.toString() ?? "Please fix the form errors.");
+              }
+            )}
             className="space-y-5"
           >
             <button
@@ -166,17 +227,19 @@ export default function SignInForm() {
               </Link>
             </div>
 
-            <Button
+            <button
               type="submit"
-              className="w-full h-12 hover:bg-button-clr1/40 hover:text-sub-text1 font-semibold transition-all text-sub-text3"
+              disabled={loading}
+              className="w-full h-12 rounded-lg bg-button-clr1/80 hover:bg-button-clr1 text-white font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+              {loading ? "Signing in..." : "Sign In"}
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </form>
         </Form>
 
         <p className="mt-8 text-center text-sm text-sub-text3/60">
-          Already have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/auth/sign-up"
             className="text-sub-text2/85 font-bold hover:underline"

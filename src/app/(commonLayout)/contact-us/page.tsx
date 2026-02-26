@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +14,83 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 export default function ContactUs() {
+  const { data: session, status } = useSession();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [topic, setTopic] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (session?.user) {
+      const name = (session.user as { name?: string | null })?.name ?? "";
+      const parts = name.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        setFirstName(parts[0] ?? "");
+        setLastName(parts.slice(1).join(" ") ?? "");
+      } else if (parts.length === 1) {
+        setFirstName(parts[0] ?? "");
+      }
+      const em = (session.user as { email?: string | null })?.email ?? "";
+      if (em) setEmail(em);
+    }
+  }, [session?.user]);
+
+  const resetForm = () => {
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setTopic("");
+    setMessage("");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    if (!topic.trim()) {
+      toast.error("Please select a topic.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          topic,
+          message: message.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const errMsg = data?.error ?? (data?.details ? String(data.details) : null) ?? "Something went wrong. Please try again.";
+        toast.error(errMsg);
+        return;
+      }
+      toast.success(session ? "We received your message. We'll reply in your Messages—check your dashboard." : "We received your message. We'll reply to the email you provided.");
+      resetForm();
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-white py-20 px-4 flex items-center justify-center">
+        <p className="text-[#6B7280]">Loading…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white py-20 px-4">
       {/* Page Header */}
@@ -22,8 +99,8 @@ export default function ContactUs() {
           Help Center
         </h1>
         <p className="text-[#6B7280] text-lg font-normal max-w-3xl mx-auto leading-relaxed">
-          Questions, issues or feedback? We are here to help. Use the form below
-          to report a problem or ask a question, and we will take a look.
+          Questions, issues or feedback? We are here to help. Use the form below to report a problem or ask a question.
+          {session ? " We'll reply in your Messages." : " We'll reply to the email you provide. No account needed to contact us."}
         </p>
       </div>
 
@@ -34,7 +111,7 @@ export default function ContactUs() {
             Get in Touch
           </h2>
 
-          <form className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Name Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
@@ -46,7 +123,10 @@ export default function ContactUs() {
                 </Label>
                 <Input
                   id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   placeholder="Enter your first name"
+                  required
                   className="h-[52px] bg-[#F9FAFB] border-[#E5E7EB] rounded-lg px-4 placeholder:text-[#9CA3AF] focus-visible:ring-blue-500 shadow-none"
                 />
               </div>
@@ -59,13 +139,16 @@ export default function ContactUs() {
                 </Label>
                 <Input
                   id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   placeholder="Enter your last name"
+                  required
                   className="h-[52px] bg-[#F9FAFB] border-[#E5E7EB] rounded-lg px-4 placeholder:text-[#9CA3AF] focus-visible:ring-blue-500 shadow-none"
                 />
               </div>
             </div>
 
-            {/* Email Field */}
+            {/* Email Field - from account when logged in */}
             <div className="space-y-3">
               <Label
                 htmlFor="email"
@@ -76,20 +159,24 @@ export default function ContactUs() {
               <Input
                 id="email"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter the email we should reply to"
+                required
+                readOnly={!!session?.user}
                 className="h-[52px] bg-[#F9FAFB]/50 border-[#E5E7EB] rounded-lg px-4 placeholder:text-[#9CA3AF] focus-visible:ring-blue-500 shadow-none"
               />
             </div>
 
             {/* Issue Select */}
-            <div className="space-y-3 text-sub-text3">
+            <div className="space-y-3">
               <Label
                 htmlFor="issue"
-                className="text-[15px] font-semibold text-sub-text3"
+                className="text-[15px] font-semibold text-[#374151]"
               >
-                What is this issue related to?
+                Topic
               </Label>
-              <Select name="issue" required>
+              <Select value={topic} onValueChange={setTopic}>
                 <SelectTrigger className="w-full h-[52px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-4 text-sub-text1 shadow-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                   <SelectValue
                     placeholder="Select your issue."
@@ -108,6 +195,12 @@ export default function ContactUs() {
                     className="py-3 cursor-pointer"
                   >
                     Missing or incorrect team, league, or level information
+                  </SelectItem>
+                  <SelectItem
+                    value="head-coach-dispute"
+                    className="py-3 cursor-pointer"
+                  >
+                    Head coach dispute (another coach already claimed this team/level/birth year)
                   </SelectItem>
                   <SelectItem
                     value="visibility-access"
@@ -147,7 +240,11 @@ export default function ContactUs() {
               </Label>
               <Textarea
                 id="message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 placeholder="Please describe the issue and include any relevant details."
+                required
+                minLength={10}
                 className="min-h-[160px] bg-[#F9FAFB] border-[#E5E7EB] rounded-lg p-4 placeholder:text-[#9CA3AF] focus-visible:ring-blue-500 shadow-none resize-none"
               />
             </div>
@@ -155,9 +252,10 @@ export default function ContactUs() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] h-[52px] text-white font-bold text-base rounded-lg transition-colors shadow-none"
+              disabled={submitting}
+              className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] h-[52px] text-white font-bold text-base rounded-lg transition-colors shadow-none disabled:opacity-70"
             >
-              Send Message
+              {submitting ? "Sending…" : "Send Message"}
             </Button>
           </form>
         </CardContent>

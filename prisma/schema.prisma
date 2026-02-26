@@ -1,0 +1,592 @@
+// My Hockey Recruiting - Prisma Schema
+// Run: npx prisma generate && npx prisma db push (or migrate)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users & Auth ─────────────────────────────────────────────────────
+enum UserRole {
+  PARENT
+  COACH
+  ADMIN
+}
+
+model User {
+  id                       String    @id @default(cuid())
+  email                    String    @unique
+  passwordHash             String?   @map("password_hash") // null if OAuth
+  name                     String?
+  role                     UserRole  @default(PARENT)
+  emailVerified            DateTime? @map("email_verified")
+  verificationCode         String?   @map("verification_code") // 6-digit OTP
+  verificationCodeExpiresAt DateTime? @map("verification_code_expires_at")
+  oneTimeSignInToken       String?   @map("one_time_sign_in_token")
+  oneTimeSignInTokenExpiresAt DateTime? @map("one_time_sign_in_token_expires_at")
+  passwordResetToken       String?   @map("password_reset_token")
+  passwordResetTokenExpiresAt DateTime? @map("password_reset_token_expires_at")
+  image                    String?
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  parentProfile ParentProfile?
+  coachProfile  CoachProfile?
+  blocksGiven   Block[] @relation("BlockBlocker")
+  blocksReceived Block[] @relation("BlockBlocked")
+}
+
+model ParentProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique @map("user_id")
+  phone      String?
+  location   String?
+  bio        String?  @db.Text
+  socialLink String?  @map("social_link")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Subscription (parents only) - planId: free | gold | elite | familyGold | familyElite
+  planId                    String?   @map("plan_id") @default("free")
+  stripeCustomerId          String?               @map("stripe_customer_id")
+  stripeSubscriptionId     String?               @map("stripe_subscription_id")
+  subscriptionStatus       String?               @map("subscription_status") // active, canceled, past_due, etc.
+  subscriptionPeriodEndAt  DateTime?             @map("subscription_period_end_at")
+  eventReminderSmsEnabled  Boolean  @default(true) @map("event_reminder_sms_enabled") // SMS 24h before events
+
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  players Player[]
+  rsvps   EventRsvp[]
+  contactRequests ContactRequest[]
+  ratingRequestsSent RatingRequest[]
+  parentContactRequestsReceived ParentContactRequest[] @relation("ParentContactRequestTarget")
+  parentContactRequestsSent     ParentContactRequest[] @relation("ParentContactRequestRequester")
+  playerSubscriptions          PlayerSubscription[]
+}
+
+enum CoachRole {
+  HEAD_COACH
+  ASSISTANT_COACH
+}
+
+model CoachProfile {
+  id           String    @id @default(cuid())
+  userId       String    @unique @map("user_id")
+  coachRole    CoachRole? @map("coach_role") // HEAD_COACH | ASSISTANT_COACH (required at sign-up)
+  title        String?   // e.g. "Head Coach" (display label derived from coachRole)
+  team         String?
+  teamLogo     String?   @map("team_logo") @db.Text // base64 data URLs for logo upload
+  league       String?
+  level        String?   // e.g. "Pro", "AA"
+  birthYear    Int?      @map("birth_year")
+  phone        String?
+  location     String?
+  about        String?  @db.Text
+  philosophy   String?  @db.Text
+  image        String?  @db.Text // base64 data URLs can be large
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certifications CoachCertification[]
+  experience   CoachExperience[]
+  specialties  CoachSpecialty[]
+  reviews      CoachReview[]
+  contactRequests ContactRequest[]
+  ratingRequests  RatingRequest[]
+  playerVerifications CoachPlayerVerification[]
+}
+
+// Coach verifies players who claim to be on their roster (team/level/birthYear match)
+model CoachPlayerVerification {
+  id         String   @id @default(cuid())
+  coachId    String   @map("coach_id")
+  playerId  String   @map("player_id")
+  status    String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  coach  CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  player Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([coachId, playerId])
+  @@map("coach_player_verifications")
+}
+
+// ─── Coach nested data ────────────────────────────────────────────────
+model CoachCertification {
+  id          String       @id @default(cuid())
+  coachId     String       @map("coach_id")
+  name        String
+  number      String?
+  expiresAt   DateTime?    @map("expires_at")
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@map("coach_certifications")
+}
+
+model CoachExperience {
+  id          String       @id @default(cuid())
+  coachId     String       @map("coach_id")
+  title       String
+  team        String?
+  years       String?
+  description String?      @db.Text
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@map("coach_experience")
+}
+
+model CoachSpecialty {
+  id         String       @id @default(cuid())
+  coachId    String       @map("coach_id")
+  name       String
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@map("coach_specialties")
+}
+
+model CoachReview {
+  id              String   @id @default(cuid())
+  coachId         String   @map("coach_id")
+  author          String
+  authorId        String?  @map("author_id") // parent User id
+  rating          Int      // overall (1-5), computed as average of criteria
+  text            String   @db.Text
+  criteriaRatings Json?    @map("criteria_ratings") // { "communication": 4, "leadership": 5, ... }
+  status          String   @default("visible") // "visible" | "disputed" (disputed = hidden)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  dispute      CoachReviewDispute?
+
+  @@map("coach_reviews")
+}
+
+// Dispute submitted by coach — visible in admin portal when built
+model CoachReviewDispute {
+  id              String   @id @default(cuid())
+  reviewId        String   @unique @map("review_id")
+  coachProfileId  String   @map("coach_profile_id")
+  reason          String?  @db.Text // optional: "false", "demeaning", "unknown_author", "profanity", etc.
+  status          String   @default("pending") // "pending" | "resolved" | "dismissed"
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  review   CoachReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  messages CoachReviewDisputeMessage[]
+
+  @@map("coach_review_disputes")
+}
+
+model CoachReviewDisputeMessage {
+  id        String   @id @default(cuid())
+  disputeId String   @map("dispute_id")
+  authorType String  @map("author_type") // "admin" | "disputant"
+  authorId   String?  @map("author_id") // User id
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  dispute CoachReviewDispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@map("coach_review_dispute_messages")
+}
+
+// ─── Per-player subscriptions (Gold/Elite pay per child; Family is on ParentProfile) ───
+model PlayerSubscription {
+  id                    String    @id @default(cuid())
+  parentId              String    @map("parent_id")
+  planId                String    @map("plan_id") // gold | elite
+  stripeSubscriptionId  String    @map("stripe_subscription_id")
+  subscriptionStatus    String?   @map("subscription_status")
+  subscriptionPeriodEndAt DateTime? @map("subscription_period_end_at")
+  playerId              String?   @unique @map("player_id") // null = paid slot, not yet assigned
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  parent ParentProfile @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  player Player?       @relation("PlayerSubscription", fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@unique([stripeSubscriptionId])
+  @@map("player_subscriptions")
+}
+
+// ─── Players ──────────────────────────────────────────────────────────
+model Player {
+  id          String   @id @default(cuid())
+  parentId    String   @map("parent_id")
+  name        String
+  birthYear   Int      @map("birth_year")
+  position    String?
+  level       String?  // e.g. "AAA", "AA"
+  gender      String?
+  location    String?
+  team        String?
+  teamLogo    String?  @map("team_logo")
+  league      String?
+  image       String?  @db.Text
+  bio         String?  @db.Text
+  socialLink  String?  @map("social_link") // Instagram, Twitter, etc.
+  status      String   @default("Pending") // Verified, Pending
+  goals       Int?
+  assists     Int?
+  plusMinus   Int?     @map("plus_minus") // +/-
+  gaa         Float?
+  savePct     String?  @map("save_pct") // e.g. "80%"
+  planId      String?  @map("plan_id") @default("free") // free | gold | elite | from parent if family
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  parent      ParentProfile @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  experience  PlayerExperience[]
+  reviews     PlayerReview[]
+  eventRsvps  EventRsvp[]
+  ratingRequests RatingRequest[]
+  contactRequestsAsPlayer ContactRequest[]
+  parentContactRequests   ParentContactRequest[]
+  subscription            PlayerSubscription? @relation("PlayerSubscription")
+  coachVerifications      CoachPlayerVerification[]
+}
+
+model PlayerExperience {
+  id          String  @id @default(cuid())
+  playerId   String  @map("player_id")
+  title      String
+  team       String?
+  years      String?
+  description String? @db.Text
+  player     Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("player_experience")
+}
+
+model PlayerReview {
+  id              String   @id @default(cuid())
+  playerId        String   @map("player_id")
+  author          String
+  authorId        String?  @map("author_id")
+  rating          Int      // overall (1-5), computed as average of criteria
+  text            String   @db.Text
+  criteriaRatings Json?    @map("criteria_ratings") // { "skating": 4, "shooting": 5, ... }
+  status          String   @default("visible") // "visible" | "disputed" (disputed = hidden)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  dispute   PlayerReviewDispute?
+
+  @@map("player_reviews")
+}
+
+// Dispute submitted by parent — visible in admin portal when built
+model PlayerReviewDispute {
+  id               String   @id @default(cuid())
+  reviewId         String   @unique @map("review_id")
+  parentProfileId String   @map("parent_profile_id")
+  reason           String?  @db.Text
+  status           String   @default("pending") // "pending" | "resolved" | "dismissed"
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  review   PlayerReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  messages PlayerReviewDisputeMessage[]
+
+  @@map("player_review_disputes")
+}
+
+model PlayerReviewDisputeMessage {
+  id        String   @id @default(cuid())
+  disputeId String   @map("dispute_id")
+  authorType String  @map("author_type") // "admin" | "disputant"
+  authorId   String?  @map("author_id") // User id
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  dispute PlayerReviewDispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@map("player_review_dispute_messages")
+}
+
+model RatingRequest {
+  id              String   @id @default(cuid())
+  parentProfileId String   @map("parent_profile_id")
+  playerId        String   @map("player_id")
+  coachProfileId  String   @map("coach_profile_id")
+  status          String   @default("pending") // "pending" | "completed"
+  message         String?  @db.Text
+  playerReviewId  String?  @map("player_review_id") // set when coach completes
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  parent ParentProfile @relation(fields: [parentProfileId], references: [id], onDelete: Cascade)
+  player Player        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  coach  CoachProfile  @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+
+  @@map("rating_requests")
+}
+
+// ─── Lookups (admin-managed) ───────────────────────────────────────────
+// Flat lookups: coach_title, birth_year, coach_specialty, area, league, level, team
+model LookupValue {
+  id         String   @id @default(cuid())
+  category   String   // coach_title | birth_year | coach_specialty | area | league | level | team
+  value      String
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([category, value])
+  @@map("lookup_values")
+}
+
+// ─── Events ───────────────────────────────────────────────────────────
+model Event {
+  id              String   @id @default(cuid())
+  coachId         String?  @map("coach_id") // optional, for coach-created events
+  title           String
+  description     String?  @db.Text
+  image           String?  @db.Text // base64 or URL - event photo/banner
+  eventType       String?  @map("event_type")   // Camp, Tournament, Clinic, etc.
+  ageGroup        String?  @map("age_group")   // e.g. U14-U16
+  rinkName        String?  @map("rink_name")
+  location        String?
+  startAt         DateTime @map("start_at")
+  endAt           DateTime? @map("end_at")
+  websiteLink     String?  @map("website_link")
+  socialMediaLink String?  @map("social_media_link")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  rsvps       EventRsvp[]
+
+  @@map("events")
+}
+
+model EventRsvp {
+  id              String   @id @default(cuid())
+  eventId         String   @map("event_id")
+  parentProfileId String   @map("parent_profile_id")
+  playerId        String?  @map("player_id") // required for "going", null for "notGoing"
+  status          String   @default("going") // "going" | "notGoing"
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  event   Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  parent  ParentProfile  @relation(fields: [parentProfileId], references: [id], onDelete: Cascade)
+  player  Player?        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, parentProfileId])
+  @@map("event_rsvps")
+}
+
+// Tracks which RSVPs we've sent a 24h reminder for (avoids duplicate SMS)
+model EventReminderSent {
+  id          String   @id @default(cuid())
+  eventRsvpId String   @unique @map("event_rsvp_id")
+  sentAt      DateTime @default(now()) @map("sent_at")
+
+  @@map("event_reminder_sent")
+}
+
+// ─── Contact Requests (approve/reject before sharing contact info) ───
+model ContactRequest {
+  id              String   @id @default(cuid())
+  coachProfileId  String   @map("coach_profile_id")
+  parentProfileId String   @map("parent_profile_id")
+  playerId        String?  @map("player_id") // set when coach requests parent contact for a player
+  requestedBy     String   @map("requested_by") // "coach" | "parent"
+  status          String   @default("pending") // "pending" | "approved" | "rejected"
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  coach  CoachProfile  @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+  parent ParentProfile @relation(fields: [parentProfileId], references: [id], onDelete: Cascade)
+  player Player?       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("contact_requests")
+}
+
+model ParentContactRequest {
+  id                String   @id @default(cuid())
+  requestingParentId String   @map("requesting_parent_id")
+  targetParentId    String   @map("target_parent_id")
+  playerId          String   @map("player_id")
+  status            String   @default("pending")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  requestingParent ParentProfile @relation("ParentContactRequestRequester", fields: [requestingParentId], references: [id], onDelete: Cascade)
+  targetParent     ParentProfile @relation("ParentContactRequestTarget", fields: [targetParentId], references: [id], onDelete: Cascade)
+  player           Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([requestingParentId, targetParentId, playerId])
+  @@map("parent_contact_requests")
+}
+
+// ─── Contact / Support ────────────────────────────────────────────────
+model ContactMessage {
+  id             String    @id @default(cuid())
+  userId         String?   @map("user_id") // set when logged in; enables threading
+  firstName      String    @map("first_name")
+  lastName       String    @map("last_name")
+  email          String
+  topic          String    // e.g. coach-verification, info-correction, billing-account, other
+  message        String    @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+  userLastReadAt DateTime? @map("user_last_read_at") // when user last viewed replies
+
+  replies ContactReply[]
+
+  @@map("contact_messages")
+}
+
+model ContactReply {
+  id              String   @id @default(cuid())
+  contactMessageId String  @map("contact_message_id")
+  authorType      String   @map("author_type") // "admin" | "user"
+  authorId        String?  @map("author_id") // User id for admin or user
+  message         String   @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  contactMessage ContactMessage @relation(fields: [contactMessageId], references: [id], onDelete: Cascade)
+
+  @@map("contact_replies")
+}
+
+// ─── Blocked Emails (admin blocks scam/fake accounts) ─────────────────
+model BlockedEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique // normalized lowercase
+  blockedAt DateTime @default(now()) @map("blocked_at")
+  blockedBy String?  @map("blocked_by") // admin User id
+  reason    String?  @db.Text
+  @@map("blocked_emails")
+}
+
+// ─── Block (hide blocker's profile from blocked user) ─────────────────
+model Block {
+  id            String   @id @default(cuid())
+  blockerUserId String   @map("blocker_user_id")
+  blockedUserId String   @map("blocked_user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  blocker User @relation("BlockBlocker", fields: [blockerUserId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockBlocked", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerUserId, blockedUserId])
+  @@map("blocks")
+}
+
+// ─── Facility Submissions (admin approval) ────────────────────────────
+model FacilitySubmission {
+  id          String   @id @default(cuid())
+  facilityName String  @map("facility_name")
+  address     String
+  city        String
+  zipCode     String   @map("zip_code")
+  phone       String?
+  website     String?
+  description String  @db.Text
+  amenities   String[] // JSON array of category names
+  hours       String?  // optional, e.g. "Mon–Sun · 6:00 AM – 11:00 PM"
+  imageUrl   String?  @map("image_url") // optional, defaults to placeholder if null
+  facilityType String? @map("facility_type") // "in-person" | "app" | "at-home-trainer" | "tournament-teams"
+  submittedBy String?  @map("submitted_by") // userId if logged in
+  status      String   @default("pending") // "pending" | "approved" | "rejected" | "removed"
+  slug        String?  @unique // set when approved — used for public URL
+  lat         Float?   // optional coordinates for distance filter
+  lng         Float?
+  reviewedAt  DateTime? @map("reviewed_at")
+  reviewedBy  String?   @map("reviewed_by") // admin userId
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("facility_submissions")
+}
+
+// ─── Facility Reviews ─────────────────────────────────────────────────
+// Facilities are listed by slug (e.g. arctic-ice-arena). Reviews stored per facility.
+model FacilityReview {
+  id           String   @id @default(cuid())
+  facilitySlug String   @map("facility_slug")
+  author       String
+  authorId     String?  @map("author_id")
+  rating       Int      // 1-5 stars
+  text         String?  @db.Text // optional commentary
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([facilitySlug])
+  @@map("facility_reviews")
+}
+
+// ─── Teams and Schools (like Training, but for schools/programs) ────────
+model SchoolSubmission {
+  id              String   @id @default(cuid())
+  name            String
+  address         String
+  city            String
+  zipCode         String   @map("zip_code")
+  phone           String?
+  website         String?
+  description     String   @db.Text
+  imageUrl        String?  @map("image_url")
+  gender          String[] @default([]) // Male, Female, Co-ed
+  league          String[] @default([]) // can span multiple leagues
+  ageBracketFrom  String?  @map("age_bracket_from") // U6, U8, ..., U20
+  ageBracketTo    String?  @map("age_bracket_to")
+  submittedBy     String?  @map("submitted_by")
+  status          String   @default("pending") // pending | approved | rejected | removed
+  slug            String?  @unique
+  lat             Float?
+  lng             Float?
+  reviewedAt      DateTime? @map("reviewed_at")
+  reviewedBy      String?   @map("reviewed_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("school_submissions")
+}
+
+model SchoolReview {
+  id        String   @id @default(cuid())
+  schoolSlug String  @map("school_slug")
+  author    String
+  authorId  String? @map("author_id")
+  rating    Int     // 1-5 stars
+  text      String? @db.Text
+  ageBracket String[] @default([]) @map("age_bracket") // U6-U20 multiselect
+  gender     String?  // Boys | Girls
+  league     String?  // e.g. E9 Boys, EHF
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([schoolSlug])
+  @@index([schoolSlug, gender, league])
+  @@map("school_reviews")
+}
+
+// ─── Blog Posts (admin-managed) ───────────────────────────────────────
+model BlogPost {
+  id         String   @id @default(cuid())
+  title      String   // header
+  content    String   @db.Text // context/body
+  imageUrl   String?  @map("image_url") @db.Text // base64 or URL
+  author     String   // free text
+  category   String   // from BLOG_CATEGORIES
+  featured   Boolean  @default(false) // shows at top of blog page
+  publishedAt DateTime @map("published_at") // display date
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("blog_posts")
+}
+
+// ─── Notifications ───────────────────────────────────────────────────
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String
+  body      String?  @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}

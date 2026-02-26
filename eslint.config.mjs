@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Third-party / generated
+    "node_modules/**",
+    "playwright-report/**",
+    "test-results/**",
+    ".venv-numbers/**",
+    "prisma/migrations/**",
   ]),
 ]);
 

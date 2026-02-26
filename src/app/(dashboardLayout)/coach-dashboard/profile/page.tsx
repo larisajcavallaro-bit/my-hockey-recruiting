@@ -1,5 +1,5 @@
-import ProfilePage from "@/components/dashboard/parentDashboard/Profile/ProfilePage";
+import CoachProfilePage from "@/components/dashboard/coachDashboard/Profile/ProfilePage";
 
 export default function Page() {
-  return <ProfilePage />;
+  return <CoachProfilePage />;
 }

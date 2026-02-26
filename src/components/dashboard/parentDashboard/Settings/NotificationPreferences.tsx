@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 interface NotificationPreference {
   id: string;
   label: string;
   description: string;
   enabled: boolean;
+  persisted?: boolean; // true = saved to backend
 }
 
 export default function NotificationPreferences() {
@@ -26,6 +28,7 @@ export default function NotificationPreferences() {
       description:
         "We'll send a reminder before events you've RSVP'd to, so nothing important gets missed",
       enabled: true,
+      persisted: true,
     },
     {
       id: "messages",
@@ -35,13 +38,49 @@ export default function NotificationPreferences() {
       enabled: false,
     },
   ]);
+  const [loading, setLoading] = useState(true);
 
-  const handleToggle = (id: string) => {
+  useEffect(() => {
+    fetch("/api/notification-preferences")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.eventReminderSmsEnabled !== undefined) {
+          setPreferences((p) =>
+            p.map((pref) =>
+              pref.id === "events"
+                ? { ...pref, enabled: data.eventReminderSmsEnabled }
+                : pref
+            )
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleToggle = async (id: string) => {
+    const pref = preferences.find((p) => p.id === id);
+    if (!pref) return;
+    const nextEnabled = !pref.enabled;
     setPreferences((prefs) =>
-      prefs.map((pref) =>
-        pref.id === id ? { ...pref, enabled: !pref.enabled } : pref,
-      ),
+      prefs.map((p) => (p.id === id ? { ...p, enabled: nextEnabled } : p))
     );
+
+    if (id === "events" && pref.persisted) {
+      const res = await fetch("/api/notification-preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventReminderSmsEnabled: nextEnabled }),
+      });
+      if (!res.ok) {
+        setPreferences((prefs) =>
+          prefs.map((p) => (p.id === id ? { ...p, enabled: pref.enabled } : p))
+        );
+        toast.error("Failed to save preference");
+        return;
+      }
+      toast.success(nextEnabled ? "Event reminders enabled" : "Event reminders disabled");
+    }
   };
 
   return (
@@ -67,6 +106,7 @@ export default function NotificationPreferences() {
               <Switch
                 checked={pref.enabled}
                 onCheckedChange={() => handleToggle(pref.id)}
+                disabled={loading && pref.id === "events"}
               />
             </div>
           </div>

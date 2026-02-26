@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Lock, Shield, Trash2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
+import { toast } from "sonner";
+import { Lock, Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
@@ -24,41 +26,102 @@ export default function SecuritySettings() {
     confirm: "",
   });
 
-  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([
-    {
-      id: "1",
-      name: "Sarah Williams",
-      role: "Coach",
-      blockedDate: "Blocked on Dec 29, 2024",
-      image: "/newasset/parent/coaches/coach1.png",
-    },
-    {
-      id: "2",
-      name: "Sarah Williams",
-      role: "Coach",
-      blockedDate: "Blocked on Dec 29, 2024",
-      image: "/newasset/parent/coaches/coach1.png",
-    },
-    {
-      id: "3",
-      name: "Sarah Williams",
-      role: "Coach",
-      blockedDate: "Blocked on Dec 29, 2024",
-      image: "/newasset/parent/coaches/coach1.png",
-    },
-  ]);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+  const [blockListLoading, setBlockListLoading] = useState(true);
 
-  const handleUnblock = (id: string) => {
-    setBlockedUsers(blockedUsers.filter((user) => user.id !== id));
+  const fetchBlockList = () => {
+    setBlockListLoading(true);
+    fetch("/api/blocks")
+      .then((r) => (r.ok ? r.json() : { blocks: [] }))
+      .then((data) => {
+        setBlockedUsers(
+          (data.blocks ?? []).map((b: { id: string; name: string; role: string; blockedDate: string; image: string | null }) => ({
+            id: b.id,
+            name: b.name,
+            role: b.role,
+            blockedDate: b.blockedDate ? `Blocked on ${new Date(b.blockedDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "Blocked",
+            image: b.image ?? "/newasset/parent/coaches/coaches.png",
+          }))
+        );
+      })
+      .catch(() => setBlockedUsers([]))
+      .finally(() => setBlockListLoading(false));
   };
 
-  const handlePasswordUpdate = () => {
-    console.log("Password update:", passwordForm);
-    setPasswordForm({ current: "", new: "", confirm: "" });
+  useEffect(() => {
+    if (activeSection === "blocklist") fetchBlockList();
+  }, [activeSection]);
+
+  const handleUnblock = async (blockId: string) => {
+    const res = await fetch(`/api/blocks/${blockId}`, { method: "DELETE" });
+    if (res.ok) {
+      setBlockedUsers((prev) => prev.filter((u) => u.id !== blockId));
+      toast.success("User unblocked");
+    } else {
+      toast.error("Failed to unblock");
+    }
+  };
+
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  const handlePasswordUpdate = async () => {
+    if (!passwordForm.current || !passwordForm.new || !passwordForm.confirm) {
+      toast.error("Please fill in all password fields");
+      return;
+    }
+    if (passwordForm.new !== passwordForm.confirm) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    if (passwordForm.new.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: passwordForm.current,
+          newPassword: passwordForm.new,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Failed to update password");
+      toast.success("Password updated successfully.");
+      setPasswordForm({ current: "", new: "", confirm: "" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update password");
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   return (
     <div className="space-y-6">
+      {/* Sign Out */}
+      <div className="bg-slate-700/50 rounded-2xl p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <LogOut className="h-5 w-5 text-slate-300" />
+            <div>
+              <h2 className="text-lg font-semibold text-white">Sign Out</h2>
+              <p className="text-sm text-sub-text3/80">
+                Sign out of your account on this device.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+          >
+            Sign Out
+          </Button>
+        </div>
+      </div>
+
       {/* Password Settings */}
       <div className="bg-slate-700/50 rounded-2xl p-6">
         <button
@@ -127,9 +190,10 @@ export default function SecuritySettings() {
 
             <Button
               onClick={handlePasswordUpdate}
+              disabled={passwordLoading}
               className="bg-button-clr1 hover:bg-button-clr1/50 text-white font-semibold w-full mt-4"
             >
-              Update Password
+              {passwordLoading ? "Updating..." : "Update Password"}
             </Button>
           </div>
         )}
@@ -160,7 +224,9 @@ export default function SecuritySettings() {
 
         {activeSection === "blocklist" && (
           <div className="mt-6 space-y-3 sm:space-y-4">
-            {blockedUsers.length > 0 ? (
+            {blockListLoading ? (
+              <p className="text-slate-400 text-center py-6">Loading...</p>
+            ) : blockedUsers.length > 0 ? (
               blockedUsers.map((user) => (
                 <div
                   key={user.id}
@@ -204,6 +270,7 @@ export default function SecuritySettings() {
                   {/* Action */}
                   <Button
                     onClick={() => handleUnblock(user.id)}
+                    disabled={blockListLoading}
                     variant="outline"
                     className="
                 w-full sm:w-auto

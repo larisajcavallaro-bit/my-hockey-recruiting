@@ -2,16 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { FC } from "react";
+import { FC, ReactNode } from "react";
 
 interface Feature {
   name: string;
   included: boolean;
+  subFeatures?: string[];
 }
 
 interface SubscriptionCardProps {
   planName: string;
-  icon: string;
+  icon: ReactNode;
   price: number | string;
   period?: string;
   description: string;
@@ -23,6 +24,7 @@ interface SubscriptionCardProps {
   badge?: string;
   savings?: string;
   onButtonClick?: () => void;
+  isLoading?: boolean;
 }
 
 const SubscriptionCard: FC<SubscriptionCardProps> = ({
@@ -39,36 +41,38 @@ const SubscriptionCard: FC<SubscriptionCardProps> = ({
   badge,
   savings,
   onButtonClick,
+  isLoading = false,
 }) => {
   return (
     <div
       className={`relative rounded-3xl p-6 transition-all duration-300 ${
-        isFree
+        isCurrentPlan
           ? "bg-green-50 border-2 border-green-300"
-          : isPopular
-            ? "border-2 border-blue-500 bg-white shadow-xl"
-            : "border border-gray-200 bg-white shadow-md"
+          : isFree
+            ? "border border-gray-200 bg-white shadow-md"
+            : isPopular
+              ? "border-2 border-blue-500 bg-white shadow-xl"
+              : "border border-gray-200 bg-white shadow-md"
       }`}
     >
-      {isCurrentPlan && isFree && (
+      {isCurrentPlan && (
         <div className="absolute -top-3 left-6 inline-block">
           <span className="inline-block rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white">
-            You are currently on the free plan
-          </span>
-        </div>
-      )}
-
-      {badge && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform">
-          <span className="inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-semibold text-white">
-            {badge}
+            {isFree ? "You are currently on the free plan" : `You are currently on the ${planName} plan`}
           </span>
         </div>
       )}
 
       <div className="mb-6 pt-2">
+        {badge && !isCurrentPlan && (
+          <div className="mb-3">
+            <span className="inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-semibold text-white">
+              {badge}
+            </span>
+          </div>
+        )}
         <div className="flex items-start gap-2 mb-2">
-          <span className="text-xl">{icon}</span>
+          <span className="flex items-center justify-center">{icon}</span>
           <h3 className="text-xl font-bold text-gray-900">{planName}</h3>
         </div>
         <div className="mb-3 flex items-baseline gap-1">
@@ -89,6 +93,7 @@ const SubscriptionCard: FC<SubscriptionCardProps> = ({
 
       <Button
         onClick={onButtonClick}
+        disabled={isLoading}
         className={`w-full mb-6 rounded-lg py-2.5 font-semibold transition-all ${
           isFree
             ? "hidden"
@@ -97,24 +102,36 @@ const SubscriptionCard: FC<SubscriptionCardProps> = ({
               : "bg-gray-200 text-gray-900 hover:bg-gray-300"
         }`}
       >
-        {buttonText}
+        {isLoading ? "Redirecting..." : buttonText}
       </Button>
 
       <div className="space-y-2 border-t border-gray-200 pt-6">
         {features.map((feature, index) => (
-          <div key={index} className="flex items-start gap-3">
-            {feature.included ? (
-              <Check className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
-            ) : (
-              <span className="mt-0.5 h-5 w-5 shrink-0 text-gray-300">-</span>
+          <div key={index}>
+            <div className="flex items-start gap-3">
+              {feature.included ? (
+                <Check className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
+              ) : (
+                <span className="mt-0.5 h-5 w-5 shrink-0 text-gray-300">-</span>
+              )}
+              <span
+                className={`text-sm ${
+                  feature.included ? "text-gray-700" : "text-gray-400"
+                }`}
+              >
+                {feature.name}
+              </span>
+            </div>
+            {feature.subFeatures && feature.subFeatures.length > 0 && (
+              <div className="ml-8 mt-1 space-y-1">
+                {feature.subFeatures.map((sub, subIdx) => (
+                  <div key={subIdx} className="flex items-start gap-2 text-sm text-gray-600">
+                    <span className="shrink-0">•</span>
+                    <span>{sub}</span>
+                  </div>
+                ))}
+              </div>
             )}
-            <span
-              className={`text-sm ${
-                feature.included ? "text-gray-700" : "text-gray-400"
-              }`}
-            >
-              {feature.name}
-            </span>
           </div>
         ))}
       </div>

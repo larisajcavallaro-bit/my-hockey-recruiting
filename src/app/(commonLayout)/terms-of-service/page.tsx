@@ -143,7 +143,7 @@ const TermsOfServicePage = () => {
               </p>
               <p className="text-muted-foreground">
                 These terms apply to all users, including parents, coaches,
-                players, and facility operators who use our platform.
+                players, and training operators who use our platform.
               </p>
             </section>
 
@@ -157,7 +157,7 @@ const TermsOfServicePage = () => {
               </h2>
               <p className="text-muted-foreground mb-6">
                 My Hockey Recruiting provides a platform to connect families,
-                coaches, and training facilities in youth hockey. Our services
+                coaches, and training locations in youth hockey. Our services
                 include:
               </p>
               <div className="space-y-4">
@@ -182,7 +182,7 @@ const TermsOfServicePage = () => {
                 <div className="flex gap-3">
                   {bullet}
                   <p className="text-foreground">
-                    Training facility listings and reviews.
+                    Training listings and reviews.
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -339,7 +339,7 @@ const TermsOfServicePage = () => {
               <p className="text-muted-foreground">
                 The Platform is provided “as is.” We do not guarantee the
                 accuracy of user-submitted content, including coach
-                credentials, facility information, or event details. Users are
+                credentials, training information, or event details. Users are
                 responsible for verifying information before making decisions.
               </p>
             </section>

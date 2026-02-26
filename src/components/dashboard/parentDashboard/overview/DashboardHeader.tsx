@@ -1,9 +1,11 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { Bell, Menu, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,8 +18,6 @@ interface DashboardHeaderProps {
   notificationsLink?: string;
 }
 
-const COACH_PROFILE_IMAGE = "/newasset/parent/coaches/coaches.png";
-
 export default function DashboardHeader({
   onMenuClick,
   profileImage,
@@ -25,10 +25,38 @@ export default function DashboardHeader({
   notificationsLink,
 }: DashboardHeaderProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const [coachProfileImage, setCoachProfileImage] = useState<string | null>(null);
   const isCoachDashboard = pathname?.startsWith("/coach-dashboard");
+  const coachProfileId = (session?.user as { coachProfileId?: string | null })?.coachProfileId;
+
+  const fetchCoachImage = useCallback(() => {
+    if (!coachProfileId) return;
+    fetch(`/api/coaches/${coachProfileId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.error && (data.image || data.user?.image)) {
+          setCoachProfileImage(data.image ?? data.user?.image ?? null);
+        }
+      })
+      .catch(() => {});
+  }, [coachProfileId]);
+
+  useEffect(() => {
+    if (!isCoachDashboard || !coachProfileId) return;
+    fetchCoachImage();
+  }, [isCoachDashboard, coachProfileId, fetchCoachImage]);
+
+  useEffect(() => {
+    if (!isCoachDashboard) return;
+    const onProfileUpdated = () => fetchCoachImage();
+    window.addEventListener("coach-profile-updated", onProfileUpdated);
+    return () => window.removeEventListener("coach-profile-updated", onProfileUpdated);
+  }, [isCoachDashboard, fetchCoachImage]);
+
   const resolvedProfileLink = profileLink ?? (isCoachDashboard ? "/coach-dashboard/profile" : "/parent-dashboard/profile");
   const resolvedNotificationsLink = notificationsLink ?? (isCoachDashboard ? "/coach-dashboard/notifications" : "/parent-dashboard/notifications");
-  const resolvedProfileImage = profileImage ?? (isCoachDashboard ? COACH_PROFILE_IMAGE : undefined);
+  const resolvedProfileImage = profileImage ?? (isCoachDashboard ? coachProfileImage : undefined);
   return (
     <header className="h-20 w-full flex items-center justify-between px-6 lg:px-8 bg-secondary-foreground/70">
       {/* LEFT: MOBILE MENU + LOGO */}
@@ -71,13 +99,23 @@ export default function DashboardHeader({
 
         <Link href={resolvedProfileLink}>
           {resolvedProfileImage ? (
-            <Image
-              src={resolvedProfileImage}
-              alt="Profile"
-              width={40}
-              height={40}
-              className="rounded-full border-2 border-orange-500 object-cover p-0.5 hover:scale-105 transition-transform"
-            />
+            resolvedProfileImage.startsWith("data:") ? (
+              <img
+                src={resolvedProfileImage}
+                alt="Profile"
+                width={40}
+                height={40}
+                className="rounded-full border-2 border-orange-500 object-cover p-0.5 hover:scale-105 transition-transform w-10 h-10"
+              />
+            ) : (
+              <Image
+                src={resolvedProfileImage}
+                alt="Profile"
+                width={40}
+                height={40}
+                className="rounded-full border-2 border-orange-500 object-cover p-0.5 hover:scale-105 transition-transform"
+              />
+            )
           ) : (
             <Avatar className="w-10 h-10 rounded-full border-2 border-orange-500 p-0.5 hover:scale-105 transition-transform">
               <AvatarFallback className="bg-slate-600 text-white">

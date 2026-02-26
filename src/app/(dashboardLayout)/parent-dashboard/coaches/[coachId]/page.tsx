@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
+import { toast } from "sonner";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   Star,
   ArrowLeft,
@@ -17,7 +20,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Sample coach data - replace with API call
 
-import { Info, Briefcase, Zap } from "lucide-react";
+import { Info, Briefcase, Zap, Ban, Shield } from "lucide-react";
+import FeatureGate from "@/components/subscription/FeatureGate";
+import WriteCoachReviewModal from "@/components/dashboard/parentDashboard/Coaches/WriteCoachReviewModal";
 
 // Update your tab mapping to include icons
 const tabs = [
@@ -28,244 +33,148 @@ const tabs = [
   { id: "reviews", label: "Reviews", icon: Star },
 ];
 
-const COACHES_DATA = [
-  {
-    id: "coash1",
-    name: "Jake Thompson",
-    title: "Head Coach",
-    team: "Vegas Golden Knights",
-    teamLogo: "/newasset/parent/coaches/coaches.png",
-    league: "Elite League",
-    level: "Pro",
-    birthYear: 1990,
-    rating: 4.9,
-    reviewCount: 25,
-    image: "/newasset/parent/coaches/coaches.png",
-    location: "Las Vegas, NV",
-    email: "jake.thompson@email.com",
-    phone: "+1 (702) 555-0123",
-    about:
-      "I'm Coach Jake Thompson, a dedicated hockey coach with a strong passion for developing players both on and off the ice. With years of experience in coaching and player development, I focus on building strong fundamentals, game intelligence, and confidence in every athlete I work with.",
-    philosophy:
-      "My coaching philosophy is centered on discipline, teamwork, and continuous improvement. I believe every player has potential, and my goal is to create a positive, supportive environment where athletes can grow their skills, understand the game, and enjoy the process of competing.",
-    certifications: [
-      {
-        name: "CEP Level 5",
-        number: "#123467940",
-      },
-      {
-        name: "USA Hockey Coaching Certification",
-        number: "#USA-HC-2023",
-      },
-      {
-        name: "Advanced Player Development",
-        number: "#APD-2022",
-      },
-    ],
-    experience: [
-      {
-        title: "Head Coach",
-        team: "Vegas Golden Knights",
-        years: "2020 - Present",
-        description: "Leading the professional team with 3 championship titles",
-      },
-      {
-        title: "Assistant Coach",
-        team: "Northside FC Academy",
-        years: "2015 - 2020",
-        description: "Developed youth players and managed training programs",
-      },
-      {
-        title: "Player Development Coach",
-        team: "Las Vegas Sports Center",
-        years: "2010 - 2015",
-        description: "Focused on skill development and game strategy",
-      },
-    ],
-    specialties: [
-      "Offensive Strategy",
-      "Player Development",
-      "Game Intelligence",
-    ],
-    reviews: [
-      {
-        author: "John Doe",
-        rating: 5,
-        text: "Excellent coach! My son improved significantly under his guidance.",
-        date: "2024-01-15",
-      },
-      {
-        author: "Jane Smith",
-        rating: 5,
-        text: "Very professional and knowledgeable. Highly recommended!",
-        date: "2024-01-10",
-      },
-      {
-        author: "Mike Johnson",
-        rating: 4,
-        text: "Great coaching methods and very attentive to details.",
-        date: "2024-01-05",
-      },
-    ],
-  },
-  {
-    id: "coash3",
-    name: "Sarah Johnson",
-    title: "Head Coach",
-    team: "Toronto Stars",
-    teamLogo: "/newasset/parent/coaches/coaches.png",
-    league: "Ontario League",
-    level: "AA",
-    birthYear: 1985,
-    rating: 4.6,
-    reviewCount: 18,
-    image: "/newasset/parent/coaches/coaches.png",
-    location: "Toronto, ON",
-    email: "sarah.johnson@email.com",
-    phone: "+1 (416) 555-0456",
-    about:
-      "Sarah Johnson is an experienced hockey coach specializing in youth development and player excellence. With a background in competitive hockey, she brings practical knowledge and a passion for nurturing young talent.",
-    philosophy:
-      "I believe in creating an inclusive environment where every player feels valued. My focus is on building confidence, technical skills, and a love for the game.",
-    certifications: [
-      {
-        name: "CEP Level 4",
-        number: "#234567891",
-      },
-      {
-        name: "Youth Hockey Development",
-        number: "#YHD-2021",
-      },
-    ],
-    experience: [
-      {
-        title: "Head Coach",
-        team: "Toronto Stars",
-        years: "2018 - Present",
-        description: "Leading AA level competitive team",
-      },
-      {
-        title: "Skills Coach",
-        team: "Toronto Youth Hockey",
-        years: "2012 - 2018",
-        description: "Developed beginner to intermediate level players",
-      },
-    ],
-    specialties: [
-      "Youth Development",
-      "Skating Techniques",
-      "Fundamental Skills",
-      "Positive Coaching",
-    ],
-    reviews: [
-      {
-        author: "Emma Davis",
-        rating: 5,
-        text: "Sarah is amazing with kids. Very encouraging and supportive.",
-        date: "2024-01-12",
-      },
-      {
-        author: "Robert Wilson",
-        rating: 4,
-        text: "Great coach with good communication skills.",
-        date: "2024-01-08",
-      },
-    ],
-  },
-  {
-    id: "coash4",
-    name: "Mark Stevens",
-    title: "Assistant Coach",
-    team: "Maple Leafs II",
-    teamLogo: "/newasset/parent/coaches/coaches.png",
-    league: "Local League",
-    level: "AAA",
-    birthYear: 1978,
-    rating: 4.2,
-    reviewCount: 12,
-    image: "/newasset/parent/coaches/coaches.png",
-    location: "Toronto, ON",
-    email: "mark.stevens@email.com",
-    phone: "+1 (416) 555-0789",
-    about:
-      "Mark Stevens brings decades of hockey experience as both a player and coach. His strategic approach and attention to detail make him an excellent mentor for aspiring players.",
-    philosophy:
-      "Strategy and fundamentals are key to success. I emphasize the importance of understanding the game at a deeper level.",
-    certifications: [
-      {
-        name: "CEP Level 3",
-        number: "#345678902",
-      },
-    ],
-    experience: [
-      {
-        title: "Assistant Coach",
-        team: "Maple Leafs II",
-        years: "2015 - Present",
-        description: "Supporting team strategy and player development",
-      },
-    ],
-    specialties: ["Tactical Strategy", "Advanced Players", "Team Dynamics"],
-    reviews: [
-      {
-        author: "Tom Harris",
-        rating: 4,
-        text: "Very knowledgeable and great at explaining tactics.",
-        date: "2024-01-10",
-      },
-    ],
-  },
-  {
-    id: "coash5",
-    name: "Nadib Stevens",
-    title: "Assistant Coach",
-    team: "Maple Leafs II",
-    teamLogo: "/newasset/parent/coaches/coaches.png",
-    league: "Local League",
-    level: "AAA",
-    birthYear: 1978,
-    rating: 4.2,
-    reviewCount: 8,
-    image: "/newasset/parent/coaches/coaches.png",
-    location: "Toronto, ON",
-    email: "nadib.stevens@email.com",
-    phone: "+1 (416) 555-0321",
-    about:
-      "Nadib is an enthusiastic coach dedicated to helping players reach their full potential through structured training and mentorship.",
-    philosophy:
-      "Every player is unique. I tailor my coaching approach to meet individual needs while maintaining team cohesion.",
-    certifications: [
-      {
-        name: "CEP Level 3",
-        number: "#456789013",
-      },
-    ],
-    experience: [
-      {
-        title: "Assistant Coach",
-        team: "Maple Leafs II",
-        years: "2018 - Present",
-        description: "Focused on individual player improvement",
-      },
-    ],
-    specialties: ["Personal Training", "Confidence Building", "Skill Training"],
-    reviews: [
-      {
-        author: "Lisa Brown",
-        rating: 4,
-        text: "Very attentive and patient coach.",
-        date: "2024-01-09",
-      },
-    ],
-  },
-];
+type CoachDetail = {
+  id: string;
+  userId?: string;
+  name: string;
+  title?: string | null;
+  team?: string | null;
+  teamLogo?: string | null;
+  league?: string | null;
+  level?: string | null;
+  birthYear?: number | null;
+  phone?: string | null;
+  location?: string | null;
+  email: string;
+  about?: string | null;
+  philosophy?: string | null;
+  image?: string | null;
+  rating: number;
+  reviewCount: number;
+  currentUserHasReviewed?: boolean;
+  certifications: { name: string; number?: string | null }[];
+  experience: { title: string; team?: string | null; years?: string | null; description?: string | null }[];
+  specialties: string[];
+  reviews: { author: string; authorId?: string | null; rating: number; text: string; date: string }[];
+};
 
 export default function CoachDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { data: session } = useSession();
   const coachId = params.coachId as string;
+  const [coach, setCoach] = useState<CoachDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [contactStatus, setContactStatus] = useState<"none" | "pending" | "approved">("none");
+  const [requesting, setRequesting] = useState(false);
+  const [blocking, setBlocking] = useState(false);
 
-  const coach = COACHES_DATA.find((c) => c.id === coachId);
+  const parentProfileId = (session?.user as { parentProfileId?: string | null })?.parentProfileId;
+
+  useEffect(() => {
+    fetch(`/api/coaches/${coachId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) {
+          setCoach(null);
+          return;
+        }
+        setCoach({
+          id: data.id,
+          userId: data.userId,
+          name: data.user?.name ?? "Coach",
+          title: data.title,
+          team: data.team,
+          teamLogo: data.teamLogo,
+          league: data.league,
+          level: data.level,
+          birthYear: data.birthYear,
+          phone: data.phone,
+          location: data.location,
+          email: data.user?.email ?? "",
+          about: data.about,
+          philosophy: data.philosophy,
+          image: data.image ?? data.user?.image,
+          rating: data.rating ?? 0,
+          reviewCount: data.reviewCount ?? 0,
+          currentUserHasReviewed: data.currentUserHasReviewed ?? false,
+          certifications: data.certifications ?? [],
+          experience: data.experience ?? [],
+          specialties: (data.specialties ?? []).map((s: { name: string }) => s.name),
+          reviews: (data.reviews ?? []).map((r: { author: string; authorId?: string | null; rating: number; text: string; createdAt: string }) => ({
+            author: r.author,
+            authorId: r.authorId,
+            rating: r.rating,
+            text: r.text,
+            date: r.createdAt,
+          })),
+        });
+      })
+      .catch(() => setCoach(null))
+      .finally(() => setLoading(false));
+  }, [coachId]);
+
+  useEffect(() => {
+    if (!coach?.id || !parentProfileId) return;
+    const q = new URLSearchParams({
+      coachProfileId: coach.id,
+      parentProfileId,
+    });
+    fetch(`/api/contact-requests/check?${q}`)
+      .then((r) => r.json())
+      .then((res) => setContactStatus(res.status ?? "none"))
+      .catch(() => setContactStatus("none"));
+  }, [coach?.id, parentProfileId]);
+
+  const handleRequestContact = async () => {
+    if (!coach || !parentProfileId) return;
+    setRequesting(true);
+    try {
+      const res = await fetch("/api/contact-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coachProfileId: coach.id,
+          parentProfileId,
+          requestedBy: "parent",
+        }),
+      });
+      const data = await res.json();
+      if (data.request?.status === "pending") {
+        setContactStatus("pending");
+      }
+    } finally {
+      setRequesting(false);
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!coach?.userId) return;
+    setBlocking(true);
+    try {
+      const res = await fetch("/api/blocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blockedUserId: coach.userId }),
+      });
+      if (res.ok) {
+        toast.success("User blocked");
+        router.push("/parent-dashboard/coaches");
+      } else {
+        toast.error("Failed to block user");
+      }
+    } finally {
+      setBlocking(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-sub-text1/80">Loading coach...</p>
+      </div>
+    );
+  }
 
   if (!coach) {
     return (
@@ -278,15 +187,26 @@ export default function CoachDetailPage() {
 
   return (
     <div className="space-y-6 pb-12 ">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.back()}
-        className="flex items-center gap-2"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Coaches
-      </Button>
+      {/* Back Button and Block */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Coaches
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleBlockUser}
+          disabled={blocking}
+          className="flex items-center gap-2 border-red-500/50 text-red-600 hover:bg-red-500/10"
+        >
+          <Ban className="w-4 h-4" />
+          {blocking ? "Blocking..." : "Block User"}
+        </Button>
+      </div>
 
       {/* Hero Section */}
       <Card className="overflow-hidden bg-secondary-foreground/60">
@@ -295,7 +215,7 @@ export default function CoachDetailPage() {
           <div className="md:col-span-1 flex flex-col items-center space-y-4">
             <div className="relative w-48 h-48 md:w-56 md:h-56 rounded-lg overflow-hidden">
               <Image
-                src={coach.image}
+                src={coach.image ?? "/newasset/parent/coaches/coaches.png"}
                 alt={coach.name}
                 fill
                 className="object-cover"
@@ -319,7 +239,9 @@ export default function CoachDetailPage() {
                   ))}
                 </div>
                 <span className="font-semibold">
-                  {coach.rating.toFixed(1)} ({coach.reviewCount} reviews)
+                  {coach.reviewCount > 0
+                    ? `${coach.rating.toFixed(1)} (${coach.reviewCount} review${coach.reviewCount !== 1 ? "s" : ""})`
+                    : "No reviews yet"}
                 </span>
               </div>
             </div>
@@ -331,13 +253,25 @@ export default function CoachDetailPage() {
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg space-y-3">
               <h3 className="font-semibold text-lg">Current Team</h3>
               <div className="flex items-center gap-3">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                  <Image
-                    src={coach.teamLogo}
-                    alt={coach.team}
-                    fill
-                    className="object-cover"
-                  />
+                <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                  {coach.teamLogo ? (
+                    coach.teamLogo.startsWith("data:") ? (
+                      <img
+                        src={coach.teamLogo}
+                        alt={coach.team ?? "Team logo"}
+                        className="w-full h-full object-contain p-0.5"
+                      />
+                    ) : (
+                      <Image
+                        src={coach.teamLogo}
+                        alt={coach.team ?? "Team"}
+                        fill
+                        className="object-contain p-1"
+                      />
+                    )
+                  ) : (
+                    <Shield className="w-5 h-5 text-slate-500" />
+                  )}
                 </div>
                 <div>
                   <p className="font-medium">{coach.team}</p>
@@ -358,41 +292,125 @@ export default function CoachDetailPage() {
               </div>
             </div>
 
-            {/* Contact Info */}
+            {/* Contact Info - hidden until approved */}
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg space-y-3">
               <h3 className="font-semibold text-lg">Contact Information</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-primary" />
-                  <a
-                    href={`mailto:${coach.email}`}
-                    className="text-primary hover:underline"
+              {contactStatus === "approved" ? (
+                <div className="space-y-2">
+                  {coach.email && (
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-5 h-5 text-primary" />
+                      <a href={`mailto:${coach.email}`} className="text-primary hover:underline">
+                        {coach.email}
+                      </a>
+                    </div>
+                  )}
+                  {coach.phone && (
+                    <div className="flex items-center gap-3">
+                      <Phone className="w-5 h-5 text-primary" />
+                      <a href={`tel:${coach.phone}`} className="text-primary hover:underline">
+                        {coach.phone}
+                      </a>
+                    </div>
+                  )}
+                  {coach.location && (
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      <span>{coach.location}</span>
+                    </div>
+                  )}
+                  {!coach.email && !coach.phone && !coach.location && (
+                    <p className="text-muted-foreground text-sm">No contact info on file.</p>
+                  )}
+                </div>
+              ) : contactStatus === "pending" ? (
+                <p className="text-amber-600 dark:text-amber-400 font-medium">
+                  Contact request pending. The coach will be notified to approve.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-muted-foreground text-sm">
+                    Contact info is private. Request access to connect with this coach.
+                  </p>
+                  <FeatureGate
+                    feature="contact_requests"
+                    fallback={
+                      <p className="text-sm text-orange-600 dark:text-orange-400 font-extrabold">
+                        Upgrade to Gold for contact requests between coaches and players.
+                      </p>
+                    }
                   >
-                    {coach.email}
-                  </a>
+                    <Button
+                      onClick={handleRequestContact}
+                      disabled={requesting}
+                      className="bg-green-600 hover:bg-green-500 text-white"
+                    >
+                      {requesting ? "Sending..." : "Request Contact Info"}
+                    </Button>
+                  </FeatureGate>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-primary" />
-                  <a
-                    href={`tel:${coach.phone}`}
-                    className="text-primary hover:underline"
-                  >
-                    {coach.phone}
-                  </a>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  <span>{coach.location}</span>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button className="flex-1">Request Contact</Button>
-              <Button variant="outline" className="flex-1">
-                Block Coach
-              </Button>
+            {/* Have you played for this coach? Leave a review */}
+            <div className="bg-white text-black p-4 rounded-lg flex items-center justify-between gap-4 flex-wrap">
+              <p className="font-medium">
+                {coach.currentUserHasReviewed
+                  ? "Thank you for reviewing this coach!"
+                  : "Have you played for this coach?"}
+              </p>
+              {!coach.currentUserHasReviewed && (
+                <WriteCoachReviewModal
+                  coachId={coach.id}
+                  coachName={coach.name}
+                  trigger={
+                    <Button className="bg-blue-600 hover:bg-blue-500 text-white">
+                      Leave a review!
+                    </Button>
+                  }
+                  onSubmitted={() => {
+                    fetch(`/api/coaches/${coachId}`)
+                      .then((r) => r.json())
+                      .then((data) => {
+                        if (!data.error) {
+                          setCoach({
+                            id: data.id,
+                            userId: data.userId,
+                            name: data.user?.name ?? "Coach",
+                            title: data.title,
+                            team: data.team,
+                            teamLogo: data.teamLogo,
+                            league: data.league,
+                            level: data.level,
+                            birthYear: data.birthYear,
+                            phone: data.phone,
+                            location: data.location,
+                            email: data.user?.email ?? "",
+                            about: data.about,
+                            philosophy: data.philosophy,
+                            image: data.image ?? data.user?.image,
+                            rating: data.rating ?? 0,
+                            reviewCount: data.reviewCount ?? 0,
+                            currentUserHasReviewed: data.currentUserHasReviewed ?? false,
+                            certifications: data.certifications ?? [],
+                            experience: data.experience ?? [],
+                            specialties: (data.specialties ?? []).map((s: { name: string }) => s.name),
+                            reviews: (data.reviews ?? []).map(
+                              (r: { author: string; authorId?: string | null; rating: number; text: string; createdAt: string }) => ({
+                                author: r.author,
+                                authorId: r.authorId,
+                                rating: r.rating,
+                                text: r.text,
+                                date: r.createdAt,
+                              })
+                            ),
+                          });
+                        }
+                      })
+                      .catch(() => {});
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -492,7 +510,18 @@ export default function CoachDetailPage() {
                   <Award className="w-6 h-6 text-primary flex-shrink-0" />
                   <div className="flex-1">
                     <h4 className="font-semibold">{cert.name}</h4>
-                    <p className="text-sm text-sub-text3/80">{cert.number}</p>
+                    {(cert as { number?: string | null }).number && (
+                      <p className="text-sm text-sub-text3/80">{(cert as { number?: string | null }).number}</p>
+                    )}
+                    {(cert as { expiresAt?: string | Date | null }).expiresAt && (
+                      <p className="text-sm text-sub-text3/70 mt-1">
+                        Expires:{" "}
+                        {(() => {
+                          const exp = (cert as { expiresAt?: string | Date | null }).expiresAt;
+                          return exp ? new Date(exp).toLocaleDateString() : "";
+                        })()}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -510,7 +539,7 @@ export default function CoachDetailPage() {
                     key={idx}
                     className="flex items-center gap-2 p-3 bg-none border-2 rounded-lg"
                   >
-                    <Users className="w-5 h-5 text-sub-text3 flex-shrink-0" />
+                    <Zap className="w-5 h-5 text-sub-text3 flex-shrink-0" />
                     <span className="font-medium text-sub-text3">
                       {specialty}
                     </span>

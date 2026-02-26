@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,32 @@ import { useRouter } from "next/navigation";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast.error("Please enter your email");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/forgot-password-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Failed to send code");
+      toast.success("Verification code sent to your phone.");
+      router.push(`/auth/forgot-password-verify?email=${encodeURIComponent(email.trim())}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send code");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="relative min-h-screen w-full flex items-center justify-center p-4">
@@ -41,24 +68,32 @@ export default function ForgotPasswordPage() {
 
         <h1 className="text-2xl font-bold mb-4">Forgot Password</h1>
         <p className="text-sm text-gray-400 mb-8 leading-relaxed">
-          Enter the email associated with your account, and we will send you a
-          verification code to reset your password.
+          Enter the email associated with your account. We&apos;ll send a
+          verification code to the phone number on file so you can sign in and
+          reset your password.
         </p>
 
-        <form className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label className="text-xs font-bold text-gray-300">
               Email address
             </Label>
             <Input
               type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="bg-white/5 border-white/10 h-12 text-white placeholder:text-sub-text3/80 rounded-lg focus:border-blue-500/50"
               placeholder="Enter your Email"
             />
           </div>
 
-          <Button className="w-full h-12 text-sm font-bold rounded-lg shadow-lg">
-            Send Verification Code
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 text-sm font-bold rounded-lg shadow-lg"
+          >
+            {loading ? "Sending..." : "Send Verification Code"}
           </Button>
 
           <button

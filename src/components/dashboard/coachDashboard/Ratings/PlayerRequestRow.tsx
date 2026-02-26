@@ -5,12 +5,14 @@ import { ChevronRight, Clock } from "lucide-react";
 interface PlayerRowProps {
   name: string;
   requester: string;
+  requestedDate?: string;
   onRateClick: () => void;
 }
 
 export const PlayerRequestRow = ({
   name,
   requester,
+  requestedDate = "Recently",
   onRateClick,
 }: PlayerRowProps) => {
   return (
@@ -30,7 +32,7 @@ export const PlayerRequestRow = ({
           {/* Mobile-only timestamp */}
           <div className="flex sm:hidden items-center gap-1 mt-1 text-[10px] text-sub-text1/60 italic font-medium">
             <Clock size={10} />
-            <span>Requested 2 days ago</span>
+            <span>Requested {requestedDate}</span>
           </div>
         </div>
       </div>
@@ -43,7 +45,7 @@ export const PlayerRequestRow = ({
             Requested
           </p>
           <p className="text-[11px] text-sub-text1/60 font-black italic">
-            2 days ago
+            {requestedDate}
           </p>
         </div>
 

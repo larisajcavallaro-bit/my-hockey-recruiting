@@ -9,11 +9,18 @@ import {
   Settings,
   MoveHorizontal,
   X,
+  LogOut,
+  Building2,
+  GraduationCap,
+  FileText,
+  MessageSquare,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUnreadContactCount } from "@/hooks/useUnreadContactCount";
 
 const NAV_ITEMS = [
   {
@@ -22,7 +29,7 @@ const NAV_ITEMS = [
     icon: LayoutDashboard,
   },
   {
-    title: "Search Players",
+    title: "View Players",
     href: "/coach-dashboard/players",
     icon: Users,
   },
@@ -38,7 +45,11 @@ const NAV_ITEMS = [
     href: "/coach-dashboard/rating",
     icon: Star,
   },
+  { title: "Training", href: "/training", icon: Building2 },
+  { title: "Teams and Programs", href: "/teams-and-schools", icon: GraduationCap },
+  { title: "Blog", href: "/blog", icon: FileText },
   { title: "Settings", href: "/coach-dashboard/setting", icon: Settings },
+  { title: "Contact Us", href: "/coach-dashboard/messages", icon: MessageSquare },
 ];
 
 interface SideBarProps {
@@ -55,6 +66,7 @@ export default function SideBar({
   setIsMobileOpen,
 }: SideBarProps) {
   const pathname = usePathname();
+  const unreadContactCount = useUnreadContactCount();
 
   return (
     <>
@@ -83,6 +95,7 @@ export default function SideBar({
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href;
+            const showUnread = item.href?.includes("/messages") && unreadContactCount > 0;
             return (
               <Link
                 key={item.href}
@@ -95,14 +108,22 @@ export default function SideBar({
                     : "text-slate-400 hover:bg-white/5 hover:text-white",
                 )}
               >
-                <Icon
-                  className={cn(
-                    "w-5 h-5 shrink-0 transition-colors",
-                    active
-                      ? "text-sub-text3"
-                      : "text-sub-text3 group-hover:text-sub-text2",
+                <span className="relative shrink-0">
+                  <Icon
+                    className={cn(
+                      "w-5 h-5 transition-colors",
+                      active
+                        ? "text-sub-text3"
+                        : "text-sub-text3 group-hover:text-sub-text2",
+                    )}
+                  />
+                  {showUnread && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-500"
+                      aria-label="Unread reply"
+                    />
                   )}
-                />
+                </span>
 
                 {(!isCollapsed || isMobileOpen) && (
                   <span
@@ -121,20 +142,32 @@ export default function SideBar({
           })}
         </div>
 
-        {/* FOOTER COLLAPSE BUTTON (Desktop Only) */}
-        <div className="hidden lg:block mt-auto p-4 border-t border-white/10">
+        {/* FOOTER: Logout + Collapse */}
+        <div className="mt-auto p-4 border-t border-white/10 space-y-2">
           <Button
             variant="ghost"
-            className="w-full hover:bg-white/5"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="w-full justify-start gap-3 text-slate-400 hover:bg-red-500/10 hover:text-red-400"
+            onClick={() => signOut({ callbackUrl: "/", redirect: true })}
           >
-            <MoveHorizontal
-              className={cn(
-                "w-5 h-5 text-white transition-transform duration-300",
-                isCollapsed && "rotate-180",
-              )}
-            />
+            <LogOut className="w-5 h-5 shrink-0" />
+            {(!isCollapsed || isMobileOpen) && (
+              <span className="text-sm font-medium">Log Out</span>
+            )}
           </Button>
+          <div className="hidden lg:block">
+            <Button
+              variant="ghost"
+              className="w-full hover:bg-white/5"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              <MoveHorizontal
+                className={cn(
+                  "w-5 h-5 text-white transition-transform duration-300",
+                  isCollapsed && "rotate-180",
+                )}
+              />
+            </Button>
+          </div>
         </div>
       </aside>
 

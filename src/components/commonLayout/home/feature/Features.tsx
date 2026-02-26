@@ -27,7 +27,7 @@ const FeaturesSection: FC = () => {
         {/* Cards grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {/* Card 1 */}
-          <div className="bg-popover-foreground backdrop-blur-sm rounded-2xl shadow-xl p-7 md:p-8 text-center transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl border border-secondary-foreground/5">
+          <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-7 md:p-8 text-center transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl border border-secondary-foreground/5">
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-button-clr1/20 text-button-clr1">
               <svg
                 className="h-8 w-8"
@@ -53,7 +53,7 @@ const FeaturesSection: FC = () => {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-popover-foreground backdrop-blur-sm rounded-2xl shadow-xl p-7 md:p-8 text-center transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl border border-secondary-foreground/5">
+          <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-7 md:p-8 text-center transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl border border-secondary-foreground/5">
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-button-clr1/20 text-button-clr1">
               <svg
                 className="h-8 w-8"
@@ -84,7 +84,7 @@ const FeaturesSection: FC = () => {
           </div>
 
           {/* Card 3 */}
-          <div className="bg-popover-foreground backdrop-blur-sm rounded-2xl shadow-xl p-7 md:p-8 text-center transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl border border-white/20">
+          <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-7 md:p-8 text-center transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl border border-white/20">
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-button-clr1/20 text-button-clr1">
               <svg
                 className="h-8 w-8"
@@ -108,7 +108,7 @@ const FeaturesSection: FC = () => {
           </div>
 
           {/* Card 4 */}
-          <div className="bg-popover-foreground backdrop-blur-sm rounded-2xl shadow-xl p-7 md:p-8 text-center transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl border border-white/20">
+          <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-7 md:p-8 text-center transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl border border-white/20">
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-button-clr1/20 text-button-clr1">
               <svg
                 className="h-8 w-8"

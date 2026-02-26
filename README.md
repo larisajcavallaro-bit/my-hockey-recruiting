@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# My Hockey Recruiting
 
-## Getting Started
+A platform for youth hockey families and coaches—profiles, events, RSVPs, training facilities, schools & programs, subscriptions, and more.
 
-First, run the development server:
+## Quick Start
 
 ```bash
+npm install
+cp .env.example .env.local   # Add your values
+npm run db:push              # Sync database
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Key Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run db:push` | Sync Prisma schema to database |
+| `npm run db:seed` | Seed database |
+| `npm run test:e2e` | Run Playwright e2e tests |
+| `npm run lint` | Run ESLint |
 
-## Learn More
+## Documentation
 
-To learn more about Next.js, take a look at the following resources:
+All setup guides are in the `docs/` folder:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Doc | Purpose |
+|-----|---------|
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Deploy to Vercel |
+| [docs/READY-TO-GO-LIVE.md](docs/READY-TO-GO-LIVE.md) | Pre-launch checklist |
+| [docs/EVENT-REMINDERS-SETUP.md](docs/EVENT-REMINDERS-SETUP.md) | SMS event reminders (cron) |
+| [docs/STRIPE-SETUP.md](docs/STRIPE-SETUP.md) | Stripe subscriptions |
+| [docs/BACKEND-SETUP.md](docs/BACKEND-SETUP.md) | Database & auth |
+| [docs/ADMIN-PORTAL.md](docs/ADMIN-PORTAL.md) | Admin features |
+| [docs/GODADDY-DOMAIN-SETUP.md](docs/GODADDY-DOMAIN-SETUP.md) | Custom domain |
+| [docs/CODE-REVIEW.md](docs/CODE-REVIEW.md) | Code review notes |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech Stack
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework:** Next.js 16 (App Router)
+- **Auth:** NextAuth v5
+- **Database:** Prisma + PostgreSQL (Neon)
+- **Payments:** Stripe
+- **SMS:** Twilio (Verify + reminders)
+- **Hosting:** Vercel

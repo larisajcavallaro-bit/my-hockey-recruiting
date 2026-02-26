@@ -11,8 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { EVENT_TYPES } from "@/constants/events";
+
 interface FilterState {
   coachName: string;
+  eventType: string;
   location: string;
   league: string;
   team: string;
@@ -52,6 +55,28 @@ export const EventFilters = ({
 
       {/* Filters */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {/* Event Type Filter */}
+        <Select
+          value={filters.eventType}
+          onValueChange={(value) =>
+            onFiltersChange({ ...filters, eventType: value })
+          }
+        >
+          <SelectTrigger className="w-full bg-secondary-foreground/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-sub-text1/80 h-auto focus:ring-2 focus:ring-button-clr1">
+            <SelectValue placeholder="Event Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <div className="text-sub-text1">
+              <SelectItem value="all">All Types</SelectItem>
+              {EVENT_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </div>
+          </SelectContent>
+        </Select>
+
         {/* Location Filter */}
         <Select
           value={filters.location}
