@@ -29,7 +29,7 @@ export async function GET() {
     const [facilities, schools] = await Promise.all([
       prisma.facilitySubmission.findMany({
         where: { status: "approved", slug: { not: null } },
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, createdAt: true },
       }),
       prisma.schoolSubmission.findMany({
         where: { status: "approved", slug: { not: null } },
@@ -39,13 +39,13 @@ export async function GET() {
 
     const facilityEntries = facilities.map((f) => ({
       loc: `${base}/facilities/${f.slug}`,
-      lastmod: f.updatedAt.toISOString().slice(0, 10),
+      lastmod: f.createdAt.toISOString().slice(0, 10),
       priority: "0.7",
       changefreq: "monthly",
     }));
     const trainingEntries = facilities.map((f) => ({
       loc: `${base}/training/${f.slug}`,
-      lastmod: f.updatedAt.toISOString().slice(0, 10),
+      lastmod: f.createdAt.toISOString().slice(0, 10),
       priority: "0.7",
       changefreq: "monthly",
     }));
