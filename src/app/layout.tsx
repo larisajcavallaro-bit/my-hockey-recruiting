@@ -11,9 +11,48 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.NEXTAUTH_URL ??
+  "https://myhockeyrecruiting.com";
+
 export const metadata: Metadata = {
-  title: "My Hockey Recruiting",
-  description: "Youth hockey recruiting platform",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default:
+      "My Hockey Recruiting | Youth Hockey Recruiting Platform for Parents & Coaches",
+    template: "%s | My Hockey Recruiting",
+  },
+  description:
+    "Connect youth hockey players with college and club coaches. Build your hockey recruiting profile, discover training facilities, find teams and schools, and get noticed. The #1 platform for youth hockey recruiting.",
+  keywords: [
+    "youth hockey recruiting",
+    "hockey recruiting",
+    "hockey recruitment",
+    "youth hockey",
+    "hockey players",
+    "college hockey recruiting",
+    "hockey coaches",
+    "hockey parents",
+    "hockey training facilities",
+    "hockey teams",
+    "hockey schools",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: SITE_URL,
+    siteName: "My Hockey Recruiting",
+    title: "My Hockey Recruiting | Youth Hockey Recruiting Platform",
+    description:
+      "Connect youth hockey players with coaches. Build your recruiting profile, discover training facilities, and get noticed.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "My Hockey Recruiting | Youth Hockey Recruiting Platform",
+    description:
+      "Connect youth hockey players with coaches. Build your recruiting profile and get noticed.",
+  },
 };
 
 export default function RootLayout({
