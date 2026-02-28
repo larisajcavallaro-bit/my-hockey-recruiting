@@ -27,7 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [facilities, schools] = await Promise.all([
       prisma.facilitySubmission.findMany({
         where: { status: "approved", slug: { not: null } },
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, createdAt: true },
       }),
       prisma.schoolSubmission.findMany({
         where: { status: "approved", slug: { not: null } },
@@ -37,14 +37,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const facilityUrls: MetadataRoute.Sitemap = facilities.map((f) => ({
       url: `${base}/facilities/${f.slug}`,
-      lastModified: f.updatedAt,
+      lastModified: f.createdAt,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     }));
 
     const trainingUrls: MetadataRoute.Sitemap = facilities.map((f) => ({
       url: `${base}/training/${f.slug}`,
-      lastModified: f.updatedAt,
+      lastModified: f.createdAt,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     }));

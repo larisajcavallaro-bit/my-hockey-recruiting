@@ -63,7 +63,7 @@ function resizeImageFile(file: File, maxW: number, maxH: number): Promise<string
 }
 
 const formSchema = z.object({
-  type: z.enum(["team", "school"]).default("team"),
+  type: z.enum(["team", "school"]),
   name: z.string().min(2, "Required"),
   address: z.string().min(5, "Required"),
   city: z.string().min(2, "Required"),

@@ -40,7 +40,7 @@ const updateSchema = z.object({
     (v) => (v === "" ? null : v),
     z.enum(AGE_BRACKETS).nullable().optional()
   ),
-}).strict(false);
+});
 
 /** GET - single school (admin only) */
 export async function GET(
