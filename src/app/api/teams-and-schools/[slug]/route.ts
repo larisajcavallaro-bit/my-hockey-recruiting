@@ -45,17 +45,17 @@ export async function GET(
     const school: SchoolDetail = {
       slug: sub.slug!,
       name: sub.name,
-      rinkName: sub.rinkName,
+      rinkName: sub.rinkName?.trim() || null,
       address: `${sub.address}, ${sub.city} ${sub.zipCode}`,
       phone: sub.phone ?? "Contact for info",
       hours: "Contact for hours",
       image,
       description: sub.description,
       website: sub.website,
-      boysWebsite: sub.boysWebsite ?? sub.website,
-      girlsWebsite: sub.girlsWebsite ?? sub.website,
-      boysLeague: sub.boysLeague?.length ? sub.boysLeague : sub.league,
-      girlsLeague: sub.girlsLeague?.length ? sub.girlsLeague : sub.league,
+      boysWebsite: sub.boysWebsite?.trim() || null,
+      girlsWebsite: sub.girlsWebsite?.trim() || null,
+      boysLeague: sub.boysLeague ?? [],
+      girlsLeague: sub.girlsLeague ?? [],
     };
 
     return NextResponse.json(
