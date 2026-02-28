@@ -518,11 +518,24 @@ model FacilityReview {
   @@map("facility_reviews")
 }
 
+// ─── Rinks (saved for teams/schools to reuse – pick from list to populate address) ───
+model Rink {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  city      String
+  zipCode   String   @map("zip_code")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("rinks")
+}
+
 // ─── Teams and Schools (like Training, but for schools/programs) ────────
 model SchoolSubmission {
   id              String   @id @default(cuid())
   type            String   @default("team") // "team" | "school"
   name            String
+  rinkName        String?  @map("rink_name") // optional home rink name
   address         String
   city            String
   zipCode         String   @map("zip_code")

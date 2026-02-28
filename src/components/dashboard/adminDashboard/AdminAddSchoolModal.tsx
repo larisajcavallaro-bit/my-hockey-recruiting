@@ -62,9 +62,12 @@ function resizeImageFile(file: File, maxW: number, maxH: number): Promise<string
   });
 }
 
+type Rink = { id: string; name: string; address: string; city: string; zipCode: string };
+
 const formSchema = z.object({
   type: z.enum(["team", "school"]),
   name: z.string().min(2, "Required"),
+  rinkName: z.string().optional(),
   address: z.string().min(5, "Required"),
   city: z.string().min(2, "Required"),
   zipCode: z.string().min(5, "Required"),
@@ -85,6 +88,7 @@ const formSchema = z.object({
 const defaultFormValues = {
   type: "team" as const,
   name: "",
+  rinkName: "",
   address: "",
   city: "",
   zipCode: "",
@@ -109,6 +113,7 @@ interface AdminAddSchoolModalProps {
 export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProps) {
   const [open, setOpen] = useState(false);
   const [leagues, setLeagues] = useState<string[]>([]);
+  const [rinks, setRinks] = useState<Rink[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -124,6 +129,10 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
           setLeagues(vals);
         })
         .catch(() => setLeagues([]));
+      fetch("/api/admin/rinks")
+        .then((r) => r.json())
+        .then((data) => setRinks(data.rinks ?? []))
+        .catch(() => setRinks([]));
     }
   }, [open]);
 
@@ -152,6 +161,7 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
         body: JSON.stringify({
           ...values,
           type: values.type,
+          rinkName: values.rinkName || undefined,
           website: values.website || undefined,
           boysWebsite: values.boysWebsite || undefined,
           girlsWebsite: values.girlsWebsite || undefined,
@@ -286,6 +296,86 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
                     />
                   </FormControl>
                   <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+
+            <div>
+              <FormLabel className="text-slate-300">Rink (optional – pick to fill address)</FormLabel>
+              <div className="mt-2 flex gap-2">
+                <Select
+                  onValueChange={(val) => {
+                    const rink = rinks.find((r) => r.id === val);
+                    if (rink) {
+                      form.setValue("rinkName", rink.name);
+                      form.setValue("address", rink.address);
+                      form.setValue("city", rink.city);
+                      form.setValue("zipCode", rink.zipCode);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="flex-1 bg-slate-700 border-slate-600 text-white">
+                    <SelectValue placeholder="Choose a saved rink..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rinks.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name} – {r.address}, {r.city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-500 text-slate-300 hover:bg-slate-700 shrink-0"
+                  onClick={async () => {
+                    const rn = form.getValues("rinkName")?.trim();
+                    const addr = form.getValues("address")?.trim();
+                    const city = form.getValues("city")?.trim();
+                    const zip = form.getValues("zipCode")?.trim();
+                    if (!rn || rn.length < 2 || !addr || addr.length < 5 || !city || !zip) {
+                      toast.error("Fill Rink Name, Address, City & Zip first, then save.");
+                      return;
+                    }
+                    try {
+                      const res = await fetch("/api/admin/rinks", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name: rn, address: addr, city, zipCode: zip }),
+                      });
+                      if (!res.ok) {
+                        const d = await res.json().catch(() => ({}));
+                        toast.error(d?.error ?? "Failed to save rink");
+                        return;
+                      }
+                      toast.success("Rink saved for future use.");
+                      const newRink = await res.json();
+                      setRinks((prev) => [...prev, newRink].sort((a, b) => a.name.localeCompare(b.name)));
+                    } catch {
+                      toast.error("Failed to save rink");
+                    }
+                  }}
+                >
+                  Save as new rink
+                </Button>
+              </div>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="rinkName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-300">Rink name</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="bg-slate-700 border-slate-600 text-white"
+                      placeholder="e.g. Breakaway Ice Center"
+                      {...field}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

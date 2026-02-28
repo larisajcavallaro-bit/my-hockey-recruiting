@@ -19,6 +19,7 @@ const optionalUrl = z
 const updateSchema = z.object({
   type: z.enum(["team", "school"]).optional(),
   name: z.string().min(2).optional(),
+  rinkName: z.string().nullable().optional(),
   address: z.string().min(5).optional(),
   city: z.string().min(2).optional(),
   zipCode: z.string().min(5).optional(),
@@ -111,6 +112,7 @@ async function handlePatch(
     const updateData: Record<string, unknown> = {};
     if (data.type !== undefined) updateData.type = data.type;
     if (data.name !== undefined) updateData.name = data.name.trim();
+    if (data.rinkName !== undefined) updateData.rinkName = data.rinkName?.trim() || null;
     if (data.address !== undefined) updateData.address = data.address.trim();
     if (data.city !== undefined) updateData.city = data.city.trim();
     if (data.zipCode !== undefined) updateData.zipCode = data.zipCode.trim();

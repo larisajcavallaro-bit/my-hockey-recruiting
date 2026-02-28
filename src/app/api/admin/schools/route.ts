@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 const createSchema = z.object({
   type: z.enum(["team", "school"]).default("team"),
   name: z.string().min(2),
+  rinkName: z.string().optional(),
   address: z.string().min(5),
   city: z.string().min(2),
   zipCode: z.string().min(5),
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
       data: {
         type: data.type ?? "team",
         name: data.name.trim(),
+        rinkName: data.rinkName?.trim() || null,
         address: data.address.trim(),
         city: data.city.trim(),
         zipCode: data.zipCode.trim(),

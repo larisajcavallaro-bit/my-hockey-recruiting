@@ -33,6 +33,7 @@ type Review = {
 type SchoolInfo = {
   slug: string;
   name: string;
+  rinkName?: string | null;
   address: string;
   phone: string;
   hours: string;
@@ -376,6 +377,11 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
           <Card>
             <CardContent className="p-6 space-y-4">
               <h3 className="font-semibold">Contact</h3>
+              {schoolInfo.rinkName && (
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Rink:</span> {schoolInfo.rinkName}
+                </div>
+              )}
               <div className="flex items-start gap-3 text-sm">
                 <LocationLink address={schoolInfo.address} />
               </div>

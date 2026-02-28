@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 export type SchoolDetail = {
   slug: string;
   name: string;
+  rinkName?: string | null;
   address: string;
   phone: string;
   hours: string;
@@ -44,6 +45,7 @@ export async function GET(
     const school: SchoolDetail = {
       slug: sub.slug!,
       name: sub.name,
+      rinkName: sub.rinkName,
       address: `${sub.address}, ${sub.city} ${sub.zipCode}`,
       phone: sub.phone ?? "Contact for info",
       hours: "Contact for hours",

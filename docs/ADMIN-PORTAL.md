@@ -32,6 +32,7 @@ UPDATE "User" SET role = 'ADMIN' WHERE email = 'your@email.com';
 | **Contact Messages** | View all messages from the Contact Us form |
 | **Review Disputes** | View coach and parent disputes; mark as resolved or dismissed |
 | **Training Submissions** | View training requests; approve or reject |
+| **Schools** | Add/edit teams and schools; pick from saved rinks to fill address |
 | **Users** | View all users and filter by role |
 | **Zapier** | Setup instructions and API endpoints |
 
