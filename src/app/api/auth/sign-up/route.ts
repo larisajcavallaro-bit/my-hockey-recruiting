@@ -83,6 +83,14 @@ export async function POST(request: Request) {
     }
     const role = data.userType === "coach" ? "COACH" : "PARENT";
 
+    const phoneE164 = ensureE164(data.phone);
+    if (!phoneE164) {
+      return NextResponse.json(
+        { error: "Please enter a valid 10-digit phone number for verification" },
+        { status: 400 }
+      );
+    }
+
     // Coach-only: validate head coach uniqueness (1 head coach per team/level/birthYear)
     if (role === "COACH") {
       const league = (data.league ?? "").trim();
@@ -149,7 +157,6 @@ export async function POST(request: Request) {
 
     // Create role-specific profile
     try {
-      const phoneE164 = ensureE164(data.phone);
       if (role === "PARENT") {
         await prisma.parentProfile.create({
           data: {

@@ -33,8 +33,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const sent = await sendVerification(phone);
-    if (!sent) {
+    const sendResult = await sendVerification(phone);
+    if (!sendResult.ok) {
+      if (sendResult.twilioMessage?.toLowerCase().includes("invalid phone")) {
+        return NextResponse.json(
+          { error: "We don't have a valid phone number on file for your account. Please contact us through the Contact Us page so we can help." },
+          { status: 400 }
+        );
+      }
+      if (sendResult.twilioCode === 21608) {
+        return NextResponse.json(
+          { error: "Phone verification is not available for this number. Please contact us through the Contact Us page so we can help." },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
         { error: "Failed to send verification code. Please try again later." },
         { status: 500 }

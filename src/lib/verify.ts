@@ -3,9 +3,11 @@
  * Requires: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID
  */
 
-/** Normalize phone to E.164. Use same format for send and check to avoid Twilio mismatch. */
+/** Normalize phone to E.164. Use same format for send and check to avoid Twilio mismatch. Returns "" if invalid. */
 export function ensureE164(phone: string): string {
+  if (!phone || typeof phone !== "string") return "";
   const digits = phone.replace(/\D/g, "").trim();
+  if (digits.length < 10) return "";
   if (digits.length === 10) return `+1${digits}`;
   if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
   return phone.startsWith("+") ? phone : `+${digits}`;
@@ -24,6 +26,10 @@ export async function sendVerification(to: string): Promise<SendResult> {
   }
 
   const toE164 = ensureE164(to);
+  if (!toE164 || toE164.length < 10) {
+    console.error("[Twilio Verify] Invalid phone (empty or too short):", { raw: to?.substring?.(0, 20) ?? to });
+    return { ok: false, twilioMessage: "Invalid phone number" };
+  }
   try {
     const res = await fetch(
       `https://verify.twilio.com/v2/Services/${serviceSid}/Verifications`,
@@ -75,6 +81,9 @@ export async function checkVerification(to: string, code: string): Promise<Check
   }
 
   const normalizedPhone = ensureE164(to);
+  if (!normalizedPhone || normalizedPhone.length < 10) {
+    return { ok: false, twilioMessage: "Invalid phone number" };
+  }
   const trimmedCode = String(code).trim();
 
   try {

@@ -50,7 +50,15 @@ export async function POST(request: Request) {
     const devCode = process.env.DEV_VERIFICATION_CODE ?? "123456";
 
     if (!sendResult.ok) {
-      // Trial account: can only send to verified numbers (21608)
+      if (sendResult.twilioMessage?.toLowerCase().includes("invalid phone")) {
+        return NextResponse.json(
+          {
+            error:
+              "We don't have a valid phone number on file. Please contact us through the Contact Us page so we can help.",
+          },
+          { status: 400 }
+        );
+      }
       if (sendResult.twilioCode === 21608) {
         return NextResponse.json(
           {
@@ -60,7 +68,6 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      // Missing config
       if (!sendResult.twilioCode && process.env.NODE_ENV === "development") {
         return NextResponse.json({
           success: true,

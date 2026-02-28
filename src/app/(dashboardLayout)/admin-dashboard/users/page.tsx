@@ -63,6 +63,9 @@ export default function AdminUsersPage() {
   const [checkingAccount, setCheckingAccount] = useState<string | null>(null);
   const [checkAccountDialog, setCheckAccountDialog] = useState<{ user: User } | null>(null);
   const [checkPasswordValue, setCheckPasswordValue] = useState("");
+  const [setPhoneDialog, setSetPhoneDialog] = useState<{ user: User } | null>(null);
+  const [setPhoneValue, setSetPhoneValue] = useState("");
+  const [settingPhone, setSettingPhone] = useState(false);
 
   const fetchUsers = (paramsOverride?: URLSearchParams) => {
     const params = paramsOverride ?? new URLSearchParams();
@@ -167,6 +170,31 @@ export default function AdminUsersPage() {
       toast.error(e instanceof Error ? e.message : "Check failed");
     } finally {
       setCheckingAccount(null);
+    }
+  };
+
+  const handleSetPhone = async () => {
+    if (!setPhoneDialog || !setPhoneValue.trim()) return;
+    setSettingPhone(true);
+    try {
+      const res = await fetch("/api/admin/users/set-phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: setPhoneDialog.user.email,
+          phone: setPhoneValue.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Failed to set phone");
+      toast.success(data.message ?? "Phone updated.");
+      setSetPhoneDialog(null);
+      setSetPhoneValue("");
+      fetchUsers().then(setUsers);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to set phone");
+    } finally {
+      setSettingPhone(false);
     }
   };
 
@@ -481,6 +509,17 @@ export default function AdminUsersPage() {
                                       >
                                         Reset password
                                       </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-slate-500 text-slate-300"
+                                        onClick={() => {
+                                          setSetPhoneDialog({ user: u });
+                                          setSetPhoneValue(u.parentProfile?.phone ?? u.coachProfile?.phone ?? "");
+                                        }}
+                                      >
+                                        Set phone
+                                      </Button>
                                     </div>
                                   )}
                                 </div>
@@ -565,6 +604,40 @@ export default function AdminUsersPage() {
               disabled={resettingPassword || resetPasswordValue.length < 8}
             >
               {resettingPassword ? "Resetting…" : "Reset password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!setPhoneDialog} onOpenChange={() => !settingPhone && setSetPhoneDialog(null)}>
+        <DialogContent className="bg-slate-800 border-slate-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Set Phone Number</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Update the phone for <strong>{setPhoneDialog?.user.email}</strong>. Use when they can&apos;t receive verification codes (e.g. invalid/missing number). Enter a valid 10-digit US number.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="set-phone" className="text-slate-300">Phone (e.g. 555-123-4567)</Label>
+            <Input
+              id="set-phone"
+              type="tel"
+              value={setPhoneValue}
+              onChange={(e) => setSetPhoneValue(e.target.value)}
+              placeholder="555-123-4567"
+              className="bg-slate-900 border-slate-600 text-white"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-slate-500" onClick={() => !settingPhone && setSetPhoneDialog(null)} disabled={settingPhone}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-slate-600 hover:bg-slate-700"
+              onClick={handleSetPhone}
+              disabled={settingPhone || setPhoneValue.replace(/\D/g, "").length < 10}
+            >
+              {settingPhone ? "Updating…" : "Set phone"}
             </Button>
           </DialogFooter>
         </DialogContent>
