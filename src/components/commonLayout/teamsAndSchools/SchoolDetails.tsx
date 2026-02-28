@@ -216,32 +216,34 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
                   </SelectContent>
                 </Select>
                 {(uniqueGenders.length > 0 || uniqueLeagues.length > 0) && (
-                  <Select value={filterGender} onValueChange={setFilterGender}>
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="Boys/Girls" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ALL}>All</SelectItem>
-                      {uniqueGenders.map((g) => (
-                        <SelectItem key={g} value={g}>
-                          {g}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterLeague} onValueChange={setFilterLeague}>
-                    <SelectTrigger className="w-[160px]">
-                      <SelectValue placeholder="League" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ALL}>All leagues</SelectItem>
-                      {uniqueLeagues.map((l) => (
-                        <SelectItem key={l} value={l}>
-                          {l}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <>
+                    <Select value={filterGender} onValueChange={setFilterGender}>
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue placeholder="Boys/Girls" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL}>All</SelectItem>
+                        {uniqueGenders.map((g) => (
+                          <SelectItem key={g} value={g}>
+                            {g}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={filterLeague} onValueChange={setFilterLeague}>
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue placeholder="League" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL}>All leagues</SelectItem>
+                        {uniqueLeagues.map((l) => (
+                          <SelectItem key={l} value={l}>
+                            {l}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
                 )}
               </div>
 
