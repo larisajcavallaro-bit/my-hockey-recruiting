@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { TEST_ACCOUNT_EMAILS } from "@/constants/test-accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,10 @@ export async function GET(request: Request) {
     const search = searchParams.get("search");
     const limit = Math.min(parseInt(searchParams.get("limit") ?? "20", 10), 50);
 
-    const whereConditions: object[] = [];
+    const whereConditions: object[] = [
+      // Hide test/demo profiles from real users
+      { user: { email: { notIn: TEST_ACCOUNT_EMAILS } } },
+    ];
     if (search) {
       whereConditions.push({
         OR: [

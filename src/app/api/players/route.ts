@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { canParentAddPlayer } from "@/lib/subscription";
 import { hasFeature } from "@/constants/plan-features";
 import { maskPlayerByPlan } from "@/lib/plan-features";
+import { TEST_ACCOUNT_EMAILS } from "@/constants/test-accounts";
 
 export async function GET(request: Request) {
   try {
@@ -49,6 +50,13 @@ export async function GET(request: Request) {
             blocksGiven: { none: { blockedUserId: session.user.id } },
           },
         },
+      });
+    }
+
+    // Hide test/demo profiles from real users when viewing all players
+    if (!mine) {
+      whereClauses.push({
+        parent: { user: { email: { notIn: TEST_ACCOUNT_EMAILS } } },
       });
     }
 

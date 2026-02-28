@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { maskPlayerByPlan } from "@/lib/plan-features";
+import { isTestAccount } from "@/constants/test-accounts";
 
 const updatePlayerSchema = z.object({
   name: z.string().min(1).optional(),
@@ -50,6 +51,12 @@ export async function GET(
     }
 
     const parentProfileId = (session?.user as { parentProfileId?: string | null })?.parentProfileId;
+    const isOwnPlayer = parentProfileId && player.parentId === parentProfileId;
+
+    // Hide test/demo players from other users (test parents can still see their own kids)
+    if (!isOwnPlayer && isTestAccount((player.parent as { user?: { email?: string } })?.user?.email)) {
+      return NextResponse.json({ error: "Player not found" }, { status: 404 });
+    }
     const coachProfileId = (session?.user as { coachProfileId?: string | null })?.coachProfileId;
 
     // Block check: coach cannot see player if parent has blocked the coach
@@ -69,7 +76,6 @@ export async function GET(
         }
       }
     }
-    const isOwnPlayer = parentProfileId && player.parentId === parentProfileId;
 
     let hasContactAccess = isOwnPlayer;
     if (!hasContactAccess && parentProfileId && player.parentId !== parentProfileId) {

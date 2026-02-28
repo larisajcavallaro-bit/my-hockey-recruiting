@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { isTestAccount } from "@/constants/test-accounts";
 
 const experienceSchema = z.object({
   title: z.string().min(1, "Role is required"),
@@ -57,6 +58,10 @@ export async function GET(
     });
 
     if (!coach) {
+      return NextResponse.json({ error: "Coach not found" }, { status: 404 });
+    }
+
+    if (isTestAccount(coach.user?.email)) {
       return NextResponse.json({ error: "Coach not found" }, { status: 404 });
     }
 
