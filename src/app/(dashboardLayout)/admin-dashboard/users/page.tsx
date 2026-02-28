@@ -484,44 +484,46 @@ export default function AdminUsersPage() {
                                       </Badge>
                                     </div>
                                   )}
-                                  {u.role !== "ADMIN" && (
-                                    <div className="md:col-span-2 pt-2 flex flex-wrap gap-2">
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="border-slate-500 text-slate-300"
-                                        onClick={() => {
-                                          setCheckAccountDialog({ user: u });
-                                          setCheckPasswordValue("");
-                                        }}
-                                        disabled={!!checkingAccount}
-                                      >
-                                        {checkingAccount === u.id ? "…" : "Check account"}
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="border-slate-500 text-slate-300"
-                                        onClick={() => {
-                                          setResetPasswordDialog({ user: u });
-                                          setResetPasswordValue("");
-                                        }}
-                                      >
-                                        Reset password
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="border-slate-500 text-slate-300"
-                                        onClick={() => {
-                                          setSetPhoneDialog({ user: u });
-                                          setSetPhoneValue(u.parentProfile?.phone ?? u.coachProfile?.phone ?? "");
-                                        }}
-                                      >
-                                        Set phone
-                                      </Button>
-                                    </div>
-                                  )}
+                                  <div className="md:col-span-2 pt-2 flex flex-wrap gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="border-slate-500 text-slate-300"
+                                      onClick={() => {
+                                        setSetPhoneDialog({ user: u });
+                                        setSetPhoneValue(u.parentProfile?.phone ?? u.coachProfile?.phone ?? "");
+                                      }}
+                                    >
+                                      Set phone
+                                    </Button>
+                                    {u.role !== "ADMIN" && (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="border-slate-500 text-slate-300"
+                                          onClick={() => {
+                                            setCheckAccountDialog({ user: u });
+                                            setCheckPasswordValue("");
+                                          }}
+                                          disabled={!!checkingAccount}
+                                        >
+                                          {checkingAccount === u.id ? "…" : "Check account"}
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="border-slate-500 text-slate-300"
+                                          onClick={() => {
+                                            setResetPasswordDialog({ user: u });
+                                            setResetPasswordValue("");
+                                          }}
+                                        >
+                                          Reset password
+                                        </Button>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </td>
