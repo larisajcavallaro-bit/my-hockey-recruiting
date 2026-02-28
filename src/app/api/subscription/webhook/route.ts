@@ -4,15 +4,19 @@ import Stripe from "stripe";
 // Stripe SDK types may not include all API fields; use explicit shape for subscription objects
 type SubscriptionLike = { current_period_end?: number; status?: string; id?: string; metadata?: Record<string, string> };
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
 export async function POST(request: Request) {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
     console.error("[webhook] STRIPE_WEBHOOK_SECRET not set");
     return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
   }
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey?.startsWith("sk_")) {
+    console.error("[webhook] STRIPE_SECRET_KEY not set");
+    return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
+  }
+  const stripe = new Stripe(secretKey);
 
   const body = await request.text();
   const sig = request.headers.get("stripe-signature");

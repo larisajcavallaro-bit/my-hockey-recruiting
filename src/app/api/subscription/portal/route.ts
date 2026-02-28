@@ -3,14 +3,21 @@ import Stripe from "stripe";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 /**
  * Create a Stripe Customer Portal session for managing subscription.
  * User can update payment method, cancel, etc.
  * Body: { subscriptionId?: string } - when provided, opens that specific subscription.
  */
 export async function POST(request: Request) {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey?.startsWith("sk_")) {
+    return NextResponse.json(
+      { error: "Stripe is not configured" },
+      { status: 500 }
+    );
+  }
+  const stripe = new Stripe(secretKey);
+
   try {
     const session = await auth();
     if (!session?.user?.id) {

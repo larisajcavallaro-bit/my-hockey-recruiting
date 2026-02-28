@@ -66,8 +66,11 @@ When `ZAPIER_WEBHOOK_URL` is set, these events are posted to Zapier:
 | `coach_review_dispute` | Coach disputes a review | id, reviewId, coachProfileId, reason, status, createdAt |
 | `player_review_dispute` | Parent disputes a player review | id, reviewId, parentProfileId, reason, status, createdAt |
 | `facility_submission` | User submits training request | id, facilityName, address, city, status, createdAt |
+| `facebook_post` | Admin clicks "Share to Facebook" on a blog post | message, link, title, imageUrl, timestamp |
 
 **Zapier setup:** Create a Zap → Trigger: **Webhooks by Zapier** → **Catch Hook** → Copy the webhook URL into `ZAPIER_WEBHOOK_URL`.
+
+**Facebook posting:** In Blog Posts, click the share icon to send a post to Zapier. Add a Filter step (event = `facebook_post`) then **Facebook Pages** → **Create Page Post**.
 
 ### API (pull) – fetch data from Zapier
 

@@ -46,14 +46,37 @@ export async function POST(request: Request) {
       },
     });
 
-    const sent = await sendVerification(phone);
+    const sendResult = await sendVerification(phone);
+    const devCode = process.env.DEV_VERIFICATION_CODE ?? "123456";
 
-    return NextResponse.json({
-      success: true,
-      ...(process.env.NODE_ENV === "development" && !sent && {
-        _devCode: "(Twilio Verify required - add TWILIO_VERIFY_SERVICE_SID)",
-      }),
-    });
+    if (!sendResult.ok) {
+      // Trial account: can only send to verified numbers (21608)
+      if (sendResult.twilioCode === 21608) {
+        return NextResponse.json(
+          {
+            error:
+              "Phone verification is not available for this number. Our SMS provider restricts trial accounts. Please contact us at the Contact Us page so we can help.",
+          },
+          { status: 400 }
+        );
+      }
+      // Missing config
+      if (!sendResult.twilioCode && process.env.NODE_ENV === "development") {
+        return NextResponse.json({
+          success: true,
+          _devCode: `Use code ${devCode} (Twilio not configured - add TWILIO_VERIFY_SERVICE_SID for real SMS)`,
+        });
+      }
+      return NextResponse.json(
+        {
+          error:
+            "We couldn't send the verification code. Please check your phone number and try again, or contact us if it keeps happening.",
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

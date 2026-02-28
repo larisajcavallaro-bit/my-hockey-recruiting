@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import { Toaster } from "sonner";
 import SessionProvider from "@/components/providers/SessionProvider";
@@ -55,15 +55,21 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en" data-scroll-behavior="smooth" className="overflow-x-hidden">
       <body
-        className={`${poppins.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${poppins.variable} font-sans antialiased bg-background text-foreground overflow-x-hidden min-w-0`}
       >
         <SessionProvider>
           {children}

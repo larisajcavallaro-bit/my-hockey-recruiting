@@ -11,15 +11,19 @@ export function ensureE164(phone: string): string {
   return phone.startsWith("+") ? phone : `+${digits}`;
 }
 
-export async function sendVerification(to: string): Promise<boolean> {
+export type SendResult = { ok: true } | { ok: false; twilioCode?: number; twilioMessage?: string };
+
+export async function sendVerification(to: string): Promise<SendResult> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
   if (!accountSid || !authToken || !serviceSid) {
-    return false;
+    console.error("[Twilio Verify] Missing env: need TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID");
+    return { ok: false };
   }
 
+  const toE164 = ensureE164(to);
   try {
     const res = await fetch(
       `https://verify.twilio.com/v2/Services/${serviceSid}/Verifications`,
@@ -30,21 +34,32 @@ export async function sendVerification(to: string): Promise<boolean> {
           Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
         },
         body: new URLSearchParams({
-          To: ensureE164(to),
+          To: toE164,
           Channel: "sms",
         }),
       }
     );
 
+    const data = (await res.json().catch(() => ({}))) as { code?: number; error_code?: number; message?: string };
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.error("Twilio Verify error:", err);
-      return false;
+      const twilioCode = data.error_code ?? data.code;
+      console.error("[Twilio Verify] send failed:", {
+        status: res.status,
+        code: twilioCode,
+        message: data.message,
+        to: toE164.replace(/(\+?\d{4})\d+(\d{4})/, "$1****$2"),
+      });
+      return {
+        ok: false,
+        twilioCode,
+        twilioMessage: data.message,
+      };
     }
-    return true;
+    return { ok: true };
   } catch (error) {
-    console.error("Twilio Verify error:", error);
-    return false;
+    console.error("[Twilio Verify] send error:", error);
+    return { ok: false };
   }
 }
 

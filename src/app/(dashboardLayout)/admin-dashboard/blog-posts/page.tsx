@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Pencil, Trash2, FileText } from "lucide-react";
+import { Pencil, Trash2, FileText, Share2 } from "lucide-react";
 import AdminAddBlogPostModal from "@/components/dashboard/adminDashboard/AdminAddBlogPostModal";
 import AdminEditBlogPostModal from "@/components/dashboard/adminDashboard/AdminEditBlogPostModal";
 
@@ -41,6 +41,37 @@ export default function AdminBlogPostsPage() {
   useEffect(() => {
     void Promise.resolve().then(() => fetchPosts());
   }, []);
+
+  const handleShareToFacebook = async (post: BlogPost) => {
+    const baseUrl =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://www.myhockeyrecruiting.com";
+    const excerpt = post.content.slice(0, 200).trim();
+    const message =
+      post.content.length > 200 ? `${excerpt}...` : excerpt;
+    const fullMessage = `${post.title}\n\n${message}\n\nRead more: ${baseUrl}/blog`;
+    try {
+      const res = await fetch("/api/admin/post-to-facebook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: fullMessage,
+          link: `${baseUrl}/blog`,
+          title: post.title,
+          imageUrl: post.imageUrl || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.error ?? "Failed to send to Facebook");
+        return;
+      }
+      toast.success("Post sent to Zapier—check your Facebook page shortly!");
+    } catch {
+      toast.error("Something went wrong");
+    }
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this blog post? This cannot be undone.")) return;
@@ -102,6 +133,15 @@ export default function AdminBlogPostsPage() {
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                      onClick={() => handleShareToFacebook(post)}
+                      title="Share to Facebook"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </Button>
                     <Button
                       variant="outline"
                       size="icon"

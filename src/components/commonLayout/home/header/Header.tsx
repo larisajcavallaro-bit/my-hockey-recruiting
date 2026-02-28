@@ -55,13 +55,13 @@ const Header = () => {
 
   return (
     <header className="sticky border-b text-primary-foreground bg-nav-background2 top-0 z-50">
-      <section className="container mx-auto px-4 flex justify-between items-center py-4 h-20">
+      <section className="container mx-auto px-4 sm:px-6 flex justify-between items-center py-4 h-20 min-w-0">
         {/* Logo - Option A: white rounded backdrop for contrast on dark header */}
-        <div className="flex gap-2 items-center justify-start">
+        <div className="flex gap-2 items-center justify-start min-w-0 overflow-hidden">
           <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/95 p-1.5 shadow-sm">
             <Image width={44} height={44} src={logo} alt="Logo" className="object-contain" />
           </div>
-          <h1 className="font-semibold text-lg">My Hockey Recruiting</h1>
+          <h1 className="font-semibold text-base sm:text-lg truncate">My Hockey Recruiting</h1>
         </div>
 
         {/* Desktop Nav */}

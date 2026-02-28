@@ -2,10 +2,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Star, Dumbbell, MessageSquarePlus, Search, MapPin, SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { Star, Dumbbell, MessageSquarePlus, Search, MapPin, SlidersHorizontal, X, ChevronDown, CircleDot } from "lucide-react";
 import { LocationLink } from "@/components/ui/LocationLink";
-import { Icon } from "lucide-react"; // ← required for Lab icons
-import { iceHockey } from "@lucide/lab";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -262,7 +260,18 @@ export default function TrainingFacilitiesGrid() {
               </Button>
             </div>
             {/* Mobile filters - visible on small screens, hidden on md+ */}
-            <div className="md:hidden flex flex-wrap gap-2 p-3 border-t border-gray-200 bg-gray-50/60">
+            <div className="md:hidden flex flex-col sm:flex-row flex-wrap gap-3 p-3 border-t border-gray-200 bg-gray-50/60">
+              <div className="flex items-center gap-2 w-full sm:w-auto sm:min-w-[200px]">
+                <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                <AddressAutocomplete
+                  id="facilities-near-me-mobile"
+                  placeholder="Town or address (within 30 mi)"
+                  onPlaceSelect={handlePlaceSelect}
+                  types={["geocode"]}
+                  className="flex-1 min-w-0 border-0 bg-white px-3 py-2 rounded-lg text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -318,14 +327,15 @@ export default function TrainingFacilitiesGrid() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Filtered results message */}
         {(userLocation || selectedTypes.length > 0 || selectedAmenities.length > 0) && (
-          <div className="flex items-center justify-between gap-2 mb-6 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-200 break-words">
               Showing <strong>{filteredFacilities.length}</strong> training location
               {filteredFacilities.length !== 1 ? "s" : ""}
               {userLocation && <> within 30 miles of <strong>{userLocation.address}</strong></>}
@@ -434,7 +444,7 @@ export default function TrainingFacilitiesGrid() {
                 href={`/training/${facility.slug}`}
                 className="block"
               >
-                <div className="relative aspect-[4/3] mt-[-25px] overflow-hidden">
+                <div className="relative aspect-[4/3] md:mt-[-25px] overflow-hidden">
                   <Image
                     src={facility.imageUrl}
                     alt={facility.name}
@@ -452,11 +462,7 @@ export default function TrainingFacilitiesGrid() {
                     >
                       {facility.type === "in-person" && (
                         <>
-                          <Icon
-                            iconNode={iceHockey}
-                            size={14}
-                            strokeWidth={2.2}
-                          />
+                          <CircleDot size={14} strokeWidth={2.2} />
                           In Person
                         </>
                       )}
@@ -474,11 +480,7 @@ export default function TrainingFacilitiesGrid() {
                       )}
                       {facility.type === "tournament-teams" && (
                         <>
-                          <Icon
-                            iconNode={iceHockey}
-                            size={14}
-                            strokeWidth={2.2}
-                          />
+                          <CircleDot size={14} strokeWidth={2.2} />
                           Tournament Teams
                         </>
                       )}

@@ -178,16 +178,19 @@ export default function RegisterPage() {
                   }),
                 }),
               });
-              const data = await res.json().catch(() => ({}));
-              if (!res.ok) throw new Error(data.error ?? "Sign up failed");
+              const apiData = await res.json().catch(() => ({}));
+              if (!res.ok) throw new Error(apiData.error ?? "Sign up failed");
               // Redirect to verification - must verify before access
               const roleParam = userType === "coach" ? "COACH" : "PARENT";
               const verifyUrl = `/auth/email-verify?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&role=${roleParam}`;
-              if (data._devCode) {
+              if (apiData._devCode) {
                 toast.success(
-                  `Account created! Your verification code is: ${data._devCode}`,
+                  `Account created! Your verification code is: ${apiData._devCode}`,
                   { duration: 10000 }
                 );
+              } else if (apiData._verificationWarning) {
+                toast.warning(apiData._verificationWarning, { duration: 12000 });
+                toast.success("Account created! Go to the next page and try Resend code if needed.");
               } else {
                 toast.success("Account created! Check your phone for the verification code.");
               }
@@ -279,6 +282,7 @@ export default function RegisterPage() {
                   itemsKey="leagues"
                   placeholder="Type to search leagues..."
                   className="bg-white/5 border-white/10 h-12 text-white rounded-xl placeholder:text-gray-400"
+                  dropdownClassName="bg-slate-800 text-white border-slate-600 [&_li]:text-white [&_li:hover]:bg-white/20"
                 />
                 <p className="text-[11px] text-gray-400 ml-1">
                   Don&apos;t see yours? Use <Link href="/contact-us" className="text-blue-400 hover:underline">Contact Us</Link> to request it.
@@ -293,6 +297,7 @@ export default function RegisterPage() {
                   itemsKey="levels"
                   placeholder="Type to search levels..."
                   className="bg-white/5 border-white/10 h-12 text-white rounded-xl placeholder:text-gray-400"
+                  dropdownClassName="bg-slate-800 text-white border-slate-600 [&_li]:text-white [&_li:hover]:bg-white/20"
                 />
                 <p className="text-[11px] text-gray-400 ml-1">
                   Don&apos;t see yours? Use <Link href="/contact-us" className="text-blue-400 hover:underline">Contact Us</Link> to request it.
@@ -307,6 +312,7 @@ export default function RegisterPage() {
                   itemsKey="teams"
                   placeholder="Type to search teams..."
                   className="bg-white/5 border-white/10 h-12 text-white rounded-xl placeholder:text-gray-400"
+                  dropdownClassName="bg-slate-800 text-white border-slate-600 [&_li]:text-white [&_li:hover]:bg-white/20"
                 />
                 <p className="text-[11px] text-gray-400 ml-1">
                   Don&apos;t see yours? Use <Link href="/contact-us" className="text-blue-400 hover:underline">Contact Us</Link> to request it.
@@ -323,12 +329,12 @@ export default function RegisterPage() {
                   <SelectTrigger className="bg-white/5 border-white/10 h-12 text-white rounded-xl w-full [&>span]:text-white">
                     <SelectValue placeholder="Select birth year" />
                   </SelectTrigger>
-                  <SelectContent className="!bg-slate-800 !text-white border-slate-600 [&>*]:text-white">
-                    <SelectItem value=" " className="!text-white focus:!bg-white/20 focus:!text-white">
+                  <SelectContent className="!bg-slate-800 !text-white !border-slate-600 [&_[data-slot=select-item]]:!text-white [&_[data-slot=select-item]]:focus:!bg-white/20 [&_[data-slot=select-item]]:data-[highlighted]:!bg-white/20 [&_[data-slot=select-scroll-up-button]]:!text-white [&_[data-slot=select-scroll-down-button]]:!text-white">
+                    <SelectItem value=" " className="!text-white focus:!bg-white/20 focus:!text-white data-[highlighted]:!bg-white/20">
                       Select birth year
                     </SelectItem>
                     {BIRTH_YEARS.map((y) => (
-                      <SelectItem key={y} value={String(y)} className="!text-white focus:!bg-white/20 focus:!text-white">
+                      <SelectItem key={y} value={String(y)} className="!text-white focus:!bg-white/20 focus:!text-white data-[highlighted]:!bg-white/20">
                         {y}
                       </SelectItem>
                     ))}
@@ -346,11 +352,11 @@ export default function RegisterPage() {
                   <SelectTrigger className="bg-white/5 border-white/10 h-12 text-white rounded-xl w-full [&>span]:text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="!bg-slate-800 !text-white border-slate-600 [&>*]:text-white">
-                    <SelectItem value="ASSISTANT_COACH" className="!text-white focus:!bg-white/20 focus:!text-white">
+                  <SelectContent className="!bg-slate-800 !text-white !border-slate-600 [&_[data-slot=select-item]]:!text-white [&_[data-slot=select-item]]:focus:!bg-white/20 [&_[data-slot=select-item]]:data-[highlighted]:!bg-white/20 [&_[data-slot=select-scroll-up-button]]:!text-white [&_[data-slot=select-scroll-down-button]]:!text-white">
+                    <SelectItem value="ASSISTANT_COACH" className="!text-white focus:!bg-white/20 focus:!text-white data-[highlighted]:!bg-white/20">
                       Assistant Coach
                     </SelectItem>
-                    <SelectItem value="HEAD_COACH" className="!text-white focus:!bg-white/20 focus:!text-white">
+                    <SelectItem value="HEAD_COACH" className="!text-white focus:!bg-white/20 focus:!text-white data-[highlighted]:!bg-white/20">
                       Head Coach
                     </SelectItem>
                   </SelectContent>

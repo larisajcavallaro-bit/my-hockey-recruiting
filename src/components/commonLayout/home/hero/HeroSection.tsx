@@ -7,10 +7,10 @@ const HeroSection: FC = () => {
     <section
       className="relative pt-11 pb-11 flex items-center justify-center bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: "url(/newasset/homepage/hero/hero-bg-last.png",
+        backgroundImage: "url(/newasset/homepage/hero/hero-bg-last.png)",
       }}
     >
-      z{/* Overlay for better text readability */}
+      {/* Overlay for better text readability */}
       <div />
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-tight drop-shadow-2xl">

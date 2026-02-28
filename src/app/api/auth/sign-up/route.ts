@@ -125,10 +125,13 @@ export async function POST(request: Request) {
     }
 
     // Send verification code via Twilio Verify (pre-approved templates)
-    const sent = await sendVerification(data.phone);
+    const sendResult = await sendVerification(data.phone);
 
-    if (!sent && process.env.NODE_ENV === "development") {
+    if (!sendResult.ok && process.env.NODE_ENV === "development") {
       console.log(`[DEV] Twilio Verify not configured. Add TWILIO_VERIFY_SERVICE_SID to .env.local`);
+    }
+    if (!sendResult.ok && process.env.NODE_ENV === "production") {
+      console.error("[sign-up] Twilio Verify send failed:", sendResult.twilioCode, sendResult.twilioMessage);
     }
 
     // Create role-specific profile
@@ -168,15 +171,20 @@ export async function POST(request: Request) {
       throw profileError;
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        needVerification: true,
-        email: user.email,
-        phone: data.phone,
-      },
-      { status: 201 }
-    );
+    const payload: Record<string, unknown> = {
+      success: true,
+      needVerification: true,
+      email: user.email,
+      phone: data.phone,
+    };
+    if (!sendResult.ok && sendResult.twilioCode === 21608) {
+      payload._verificationWarning =
+        "Phone verification couldn't be sent (SMS provider trial limit). Use Contact Us and we'll help you verify.";
+    } else if (!sendResult.ok) {
+      payload._verificationWarning =
+        "We couldn't send the verification code. Try Resend on the next page, or contact us if it keeps happening.";
+    }
+    return NextResponse.json(payload, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

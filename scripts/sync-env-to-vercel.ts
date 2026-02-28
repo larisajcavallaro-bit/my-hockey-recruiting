@@ -8,7 +8,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 const PROJECT_NAME = "my-hockey-recruiting";
-const LIVE_URL = "https://my-hockey-recruiting.vercel.app";
+const LIVE_URL = "https://www.myhockeyrecruiting.com";
 
 // Vars to sync (exclude comments, empty lines, and VERCEL_TOKEN itself)
 function parseEnvFile(filePath: string): Record<string, string> {
@@ -35,6 +35,12 @@ async function addEnvVar(
   key: string,
   value: string,
 ): Promise<boolean> {
+  // Use "plain" for public vars (NEXT_PUBLIC_*, NEXTAUTH_URL), "encrypted" for secrets
+  const type =
+    key.startsWith("NEXT_PUBLIC_") || key === "NEXTAUTH_URL"
+      ? "plain"
+      : "encrypted";
+
   const res = await fetch(
     `https://api.vercel.com/v10/projects/${PROJECT_NAME}/env?upsert=true`,
     {
@@ -46,7 +52,7 @@ async function addEnvVar(
       body: JSON.stringify({
         key,
         value,
-        type: "secret",
+        type,
         target: ["production", "preview"],
       }),
     },

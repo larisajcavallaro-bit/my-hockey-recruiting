@@ -91,7 +91,7 @@ function OTPVerificationContent() {
       if (!res.ok) throw new Error(data.error ?? "Failed to resend");
       setTimer(60);
       if (data._devCode) {
-        toast.success(`Code resent: ${data._devCode}`, { duration: 8000 });
+        toast.success(data._devCode, { duration: 15000 });
       } else {
         toast.success("Code resent to your phone.");
       }

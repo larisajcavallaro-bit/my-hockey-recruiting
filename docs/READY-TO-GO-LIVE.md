@@ -66,7 +66,8 @@ Use this checklist before pointing your domain (myhockeyrecruiting.com) to the l
   - [ ] `AUTH_SECRET` (run `openssl rand -base64 32` to generate)
   - [X] `TWILIO_ACCOUNT_SID`
   - [X] `TWILIO_AUTH_TOKEN`
-  - [X] `TWILIO_PHONE_NUMBER`
+  - [X] `TWILIO_VERIFY_SERVICE_SID` (required for phone verification; create a Verify Service in Twilio Console)
+  - [X] `TWILIO_PHONE_NUMBER` (for SMS, if used elsewhere)
   - [X] `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (if used)
   - [X] Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and all `STRIPE_PRICE_*` vars (see STRIPE-SETUP.md)
 - [ ] **Code pushed** – Latest changes pushed to GitHub; Vercel deploy succeeds

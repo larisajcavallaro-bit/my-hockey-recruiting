@@ -100,7 +100,17 @@ export default function SignInForm() {
                       result.error === "Configuration"
                         ? "Invalid email or password"
                         : result.error;
-                    toast.error(msg);
+                    const needsVerify = typeof msg === "string" && msg.includes("verify your phone");
+                    toast.error(msg, {
+                      duration: needsVerify ? 10000 : 5000,
+                      action: needsVerify
+                        ? {
+                            label: "Verify phone",
+                            onClick: () =>
+                              router.push(`/auth/email-verify?email=${encodeURIComponent(v.email.trim())}`),
+                          }
+                        : undefined,
+                    });
                     return;
                   }
                   if (result?.ok) {

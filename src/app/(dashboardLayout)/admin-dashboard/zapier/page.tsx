@@ -92,8 +92,23 @@ export default function AdminZapierPage() {
               Events: <code className="bg-slate-700 px-1 rounded">contact_message</code>,{" "}
               <code className="bg-slate-700 px-1 rounded">coach_review_dispute</code>,{" "}
               <code className="bg-slate-700 px-1 rounded">player_review_dispute</code>,{" "}
-              <code className="bg-slate-700 px-1 rounded">facility_submission</code> (training)
+              <code className="bg-slate-700 px-1 rounded">facility_submission</code>,{" "}
+              <code className="bg-slate-700 px-1 rounded">facebook_post</code>
             </p>
+          </div>
+
+          <div className="pt-4 border-t border-slate-700">
+            <p className="text-slate-300 text-sm font-medium mb-1">Post to Facebook</p>
+            <p className="text-slate-400 text-sm mb-2">
+              In the admin Blog Posts page, each post has a share button (Share to Facebook).
+              When you click it, the post is sent to Zapier. Set up a Zap:
+            </p>
+            <ol className="text-slate-400 text-sm list-decimal list-inside space-y-1">
+              <li>Trigger: <strong>Webhooks by Zapier</strong> → <strong>Catch Hook</strong> (use your existing ZAPIER_WEBHOOK_URL)</li>
+              <li>Filter: Only continue if <code className="bg-slate-700 px-1 rounded">event</code> = <code className="bg-slate-700 px-1 rounded">facebook_post</code></li>
+              <li>Action: <strong>Facebook Pages</strong> → <strong>Create Page Post</strong></li>
+              <li>Map the <code className="bg-slate-700 px-1 rounded">message</code> field to your Facebook post content. Optionally map <code className="bg-slate-700 px-1 rounded">link</code>, <code className="bg-slate-700 px-1 rounded">imageUrl</code>.</li>
+            </ol>
           </div>
         </CardContent>
       </Card>

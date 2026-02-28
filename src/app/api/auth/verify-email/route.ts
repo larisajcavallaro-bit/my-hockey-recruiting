@@ -44,6 +44,7 @@ export async function POST(request: Request) {
 
     // Validate code via Twilio Verify (or fallback to DB for legacy)
     const verifyConfigured = !!process.env.TWILIO_VERIFY_SERVICE_SID;
+    const devCode = process.env.DEV_VERIFICATION_CODE ?? "123456";
     let isValid = false;
 
     if (verifyConfigured) {
@@ -61,8 +62,11 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+    } else if (process.env.NODE_ENV === "development" && code.trim() === devCode) {
+      // Dev bypass: when Twilio not configured, accept dev code so you can test locally
+      isValid = true;
     } else if (user.verificationCode && user.verificationCodeExpiresAt) {
-      // Fallback: our own DB-stored code (legacy / dev)
+      // Fallback: our own DB-stored code (legacy)
       if (new Date() > user.verificationCodeExpiresAt) {
         return NextResponse.json(
           { error: "Verification code expired. Please request a new one." },

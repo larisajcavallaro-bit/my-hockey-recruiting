@@ -18,7 +18,8 @@
     "import:facilities": "dotenv -e .env.local -- npx tsx scripts/import-facilities-from-numbers.ts",
     "update:facility-images": "dotenv -e .env.local -- npx tsx scripts/update-facility-images-from-spreadsheet.ts",
     "update:facility-images:alpha": "ALPHABETICAL_MAPPING=true dotenv -e .env.local -- npx tsx scripts/update-facility-images-from-spreadsheet.ts",
-    "sync-env": "dotenv -e .env.local -- npx tsx scripts/sync-env-to-vercel.ts"
+    "sync-env": "dotenv -e .env.local -- npx tsx scripts/sync-env-to-vercel.ts",
+    "change-demo-passwords": "dotenv -e .env.local -- npx tsx scripts/change-demo-passwords.ts"
   },
   "prisma": {
     "seed": "dotenv -e .env.local -- npx tsx prisma/seed.ts"
