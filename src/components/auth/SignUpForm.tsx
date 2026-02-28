@@ -443,22 +443,34 @@ export default function RegisterPage() {
           </div>
 
           {/* Terms */}
-          <div className="flex items-center space-x-2 py-2">
+          <div className="flex items-start space-x-2 py-2">
             <Checkbox
               id="terms"
               checked={terms}
               onCheckedChange={(c) => setTerms(!!c)}
-              className="border-white/40 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+              className="border-white/40 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 mt-0.5"
             />
-            <label htmlFor="terms" className="text-[11px] text-gray-300">
+            <label htmlFor="terms" className="text-[11px] text-gray-300 leading-relaxed cursor-pointer">
               I agree to the{" "}
-              <span className="text-blue-400 hover:underline cursor-pointer">
+              <Link
+                href="/terms-of-service"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
                 Terms of Service
-              </span>{" "}
+              </Link>{" "}
               and{" "}
-              <span className="text-blue-400 hover:underline cursor-pointer">
+              <Link
+                href="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
                 Privacy Policy
-              </span>
+              </Link>
             </label>
           </div>
 
