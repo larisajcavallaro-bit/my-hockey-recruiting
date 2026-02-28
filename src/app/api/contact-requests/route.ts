@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { hasFeature } from "@/constants/plan-features";
+import { createNotification } from "@/lib/notifications";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -159,6 +160,36 @@ export async function POST(request: Request) {
         status: "pending",
       },
     });
+
+    // Notify recipient
+    const requesterName = (session.user as { name?: string })?.name ?? "Someone";
+    const recipientUserId =
+      requestedBy === "parent"
+        ? (
+            await prisma.coachProfile.findUnique({
+              where: { id: targetCoachId },
+              select: { userId: true },
+            })
+          )?.userId
+        : (
+            await prisma.parentProfile.findUnique({
+              where: { id: targetParentId },
+              select: { userId: true },
+            })
+          )?.userId;
+    if (recipientUserId) {
+      const linkPath =
+        requestedBy === "parent"
+          ? "/coach-dashboard/overview"
+          : "/parent-dashboard/overview";
+      await createNotification({
+        userId: recipientUserId,
+        type: "request",
+        title: "Profile Access Request",
+        body: `${requesterName} is asking to see your contact details.`,
+        linkUrl: linkPath,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ request: { id: created.id, status: created.status } });
   } catch (err) {

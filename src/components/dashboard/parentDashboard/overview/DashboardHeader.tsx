@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useUnreadNotificationCount } from "@/hooks/useNotifications";
 import Logo from "../../../../../public/newasset/auth/logo.png";
 
 interface DashboardHeaderProps {
@@ -54,6 +55,7 @@ export default function DashboardHeader({
     return () => window.removeEventListener("coach-profile-updated", onProfileUpdated);
   }, [isCoachDashboard, fetchCoachImage]);
 
+  const unreadCount = useUnreadNotificationCount();
   const resolvedProfileLink = profileLink ?? (isCoachDashboard ? "/coach-dashboard/profile" : "/parent-dashboard/profile");
   const resolvedNotificationsLink = notificationsLink ?? (isCoachDashboard ? "/coach-dashboard/notifications" : "/parent-dashboard/notifications");
   const resolvedProfileImage = profileImage ?? (isCoachDashboard ? coachProfileImage : undefined);
@@ -92,9 +94,11 @@ export default function DashboardHeader({
           className="relative cursor-pointer group"
         >
           <Bell className="text-slate-300 w-5 h-5 group-hover:text-white transition-colors" />
-          <Badge className="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-secondary-foreground">
-            3
-          </Badge>
+          {unreadCount > 0 && (
+            <Badge className="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-secondary-foreground">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </Badge>
+          )}
         </Link>
 
         <Link href={resolvedProfileLink}>

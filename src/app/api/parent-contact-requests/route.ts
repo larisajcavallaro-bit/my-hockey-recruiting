@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { hasFeature } from "@/constants/plan-features";
+import { createNotification } from "@/lib/notifications";
 import { z } from "zod";
 
 // GET /api/parent-contact-requests - list incoming requests (for target parent to approve/reject)
@@ -114,6 +115,22 @@ export async function POST(request: Request) {
         status: "pending",
       },
     });
+
+    // Notify target parent
+    const targetParent = await prisma.parentProfile.findUnique({
+      where: { id: targetParentId },
+      select: { userId: true },
+    });
+    const requesterName = (session.user as { name?: string })?.name ?? "Another parent";
+    if (targetParent?.userId) {
+      await createNotification({
+        userId: targetParent.userId,
+        type: "request",
+        title: "Parent Contact Request",
+        body: `${requesterName} would like to connect about ${player.name}.`,
+        linkUrl: "/parent-dashboard/overview",
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ request: { id: created.id, status: created.status } });
   } catch (err) {

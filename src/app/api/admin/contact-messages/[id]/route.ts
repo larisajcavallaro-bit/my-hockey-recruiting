@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,27 @@ export async function POST(
         message: data.message.trim(),
       },
     });
+
+    // Notify user if they have an account (userId on the message)
+    if (msg.userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: msg.userId },
+        select: {
+          parentProfile: { select: { id: true } },
+          coachProfile: { select: { id: true } },
+        },
+      });
+      const messagesPath = user?.parentProfile
+        ? "/parent-dashboard/messages"
+        : "/coach-dashboard/messages";
+      await createNotification({
+        userId: msg.userId,
+        type: "message",
+        title: "New reply to your message",
+        body: "We've responded to your Contact Us submission.",
+        linkUrl: messagesPath,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ reply }, { status: 201 });
   } catch (error) {

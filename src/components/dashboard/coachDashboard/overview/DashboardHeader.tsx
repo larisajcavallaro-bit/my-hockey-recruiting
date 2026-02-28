@@ -2,7 +2,6 @@
 
 import { Bell, Menu } from "lucide-react";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Logo from "../../../../../public/newasset/auth/logo.png";
 import Link from "next/link";
@@ -47,9 +46,6 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           className="relative cursor-pointer group"
         >
           <Bell className="text-slate-300 w-5 h-5 group-hover:text-white transition-colors" />
-          <Badge className="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-secondary-foreground">
-            3
-          </Badge>
         </Link>
 
         <Link href="/parent-dashboard/profile">

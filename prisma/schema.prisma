@@ -583,10 +583,14 @@ model BlogPost {
 model Notification {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
+  type      String   @default("general") // "request" | "review" | "message" | "verified" | "general"
   title     String
   body      String?  @db.Text
+  linkUrl   String?  @map("link_url")
   read      Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([userId, read])
   @@map("notifications")
 }
