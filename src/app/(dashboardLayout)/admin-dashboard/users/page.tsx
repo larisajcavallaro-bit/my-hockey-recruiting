@@ -60,6 +60,9 @@ export default function AdminUsersPage() {
   const [resetPasswordDialog, setResetPasswordDialog] = useState<{ user: User } | null>(null);
   const [resetPasswordValue, setResetPasswordValue] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [checkingAccount, setCheckingAccount] = useState<string | null>(null);
+  const [checkAccountDialog, setCheckAccountDialog] = useState<{ user: User } | null>(null);
+  const [checkPasswordValue, setCheckPasswordValue] = useState("");
 
   const fetchUsers = (paramsOverride?: URLSearchParams) => {
     const params = paramsOverride ?? new URLSearchParams();
@@ -139,6 +142,31 @@ export default function AdminUsersPage() {
       toast.error(e instanceof Error ? e.message : "Failed to block email");
     } finally {
       setBlocking(false);
+    }
+  };
+
+  const handleCheckAccount = async (password?: string) => {
+    if (!checkAccountDialog) return;
+    const user = checkAccountDialog;
+    setCheckingAccount(user.id);
+    try {
+      const res = await fetch("/api/admin/users/check-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, password: password || "" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok) {
+        toast.success(data.message + (data.passwordMatch ? " Password verified." : ""));
+        setCheckAccountDialog(null);
+        setCheckPasswordValue("");
+      } else {
+        toast.error(data.message ?? "Check failed");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Check failed");
+    } finally {
+      setCheckingAccount(null);
     }
   };
 
@@ -429,7 +457,19 @@ export default function AdminUsersPage() {
                                     </div>
                                   )}
                                   {u.role !== "ADMIN" && (
-                                    <div className="md:col-span-2 pt-2">
+                                    <div className="md:col-span-2 pt-2 flex flex-wrap gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-slate-500 text-slate-300"
+                                        onClick={() => {
+                                          setCheckAccountDialog({ user: u });
+                                          setCheckPasswordValue("");
+                                        }}
+                                        disabled={!!checkingAccount}
+                                      >
+                                        {checkingAccount === u.id ? "…" : "Check account"}
+                                      </Button>
                                       <Button
                                         size="sm"
                                         variant="outline"
@@ -460,6 +500,40 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!checkAccountDialog} onOpenChange={() => !checkingAccount && setCheckAccountDialog(null)}>
+        <DialogContent className="bg-slate-800 border-slate-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Check account</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Diagnose why <strong>{checkAccountDialog?.user.email}</strong> can&apos;t sign in. Optionally enter the password they&apos;re using to verify it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="check-pw" className="text-slate-300">Password they&apos;re using (optional)</Label>
+            <Input
+              id="check-pw"
+              type="password"
+              value={checkPasswordValue}
+              onChange={(e) => setCheckPasswordValue(e.target.value)}
+              placeholder="Enter password to verify"
+              className="bg-slate-900 border-slate-600 text-white"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-slate-500" onClick={() => !checkingAccount && setCheckAccountDialog(null)} disabled={!!checkingAccount}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-slate-600 hover:bg-slate-700"
+              onClick={() => handleCheckAccount(checkPasswordValue)}
+              disabled={!!checkingAccount}
+            >
+              {checkingAccount ? "Checking…" : "Check"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!resetPasswordDialog} onOpenChange={() => !resettingPassword && setResetPasswordDialog(null)}>
         <DialogContent className="bg-slate-800 border-slate-700 text-white">
