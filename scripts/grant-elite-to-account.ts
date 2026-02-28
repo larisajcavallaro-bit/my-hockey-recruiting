@@ -7,7 +7,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const EMAIL = "larisacavallaro@gmail.com";
+const EMAIL = "larisajcavallaro@gmail.com";
 
 async function main() {
   const email = EMAIL.trim().toLowerCase();
