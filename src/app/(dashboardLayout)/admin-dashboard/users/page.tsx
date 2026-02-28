@@ -147,7 +147,7 @@ export default function AdminUsersPage() {
 
   const handleCheckAccount = async (password?: string) => {
     if (!checkAccountDialog) return;
-    const user = checkAccountDialog;
+    const { user } = checkAccountDialog;
     setCheckingAccount(user.id);
     try {
       const res = await fetch("/api/admin/users/check-account", {
