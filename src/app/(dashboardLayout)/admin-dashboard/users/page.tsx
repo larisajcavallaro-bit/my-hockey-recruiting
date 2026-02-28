@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Download, Ban, ChevronDown, ChevronRight, CheckCircle2 } from "lucide-react";
 import { toCSV, downloadFile } from "@/lib/csv-utils";
@@ -56,6 +57,9 @@ export default function AdminUsersPage() {
   const [blockReason, setBlockReason] = useState("");
   const [blocking, setBlocking] = useState(false);
   const [verifying, setVerifying] = useState<string | null>(null);
+  const [resetPasswordDialog, setResetPasswordDialog] = useState<{ user: User } | null>(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const fetchUsers = (paramsOverride?: URLSearchParams) => {
     const params = paramsOverride ?? new URLSearchParams();
@@ -135,6 +139,27 @@ export default function AdminUsersPage() {
       toast.error(e instanceof Error ? e.message : "Failed to block email");
     } finally {
       setBlocking(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordDialog || resetPasswordValue.length < 8) return;
+    setResettingPassword(true);
+    try {
+      const res = await fetch("/api/admin/users/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetPasswordDialog.user.email, newPassword: resetPasswordValue }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Failed to reset password");
+      toast.success(data.message ?? "Password reset. User can now sign in.");
+      setResetPasswordDialog(null);
+      setResetPasswordValue("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to reset password");
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -403,6 +428,21 @@ export default function AdminUsersPage() {
                                       </Badge>
                                     </div>
                                   )}
+                                  {u.role !== "ADMIN" && (
+                                    <div className="md:col-span-2 pt-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-slate-500 text-slate-300"
+                                        onClick={() => {
+                                          setResetPasswordDialog({ user: u });
+                                          setResetPasswordValue("");
+                                        }}
+                                      >
+                                        Reset password
+                                      </Button>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -420,6 +460,41 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!resetPasswordDialog} onOpenChange={() => !resettingPassword && setResetPasswordDialog(null)}>
+        <DialogContent className="bg-slate-800 border-slate-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Set a new password for <strong>{resetPasswordDialog?.user.email}</strong>. They can sign in immediately. Share the password securely.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="reset-pw" className="text-slate-300">New password (min 8 characters)</Label>
+            <Input
+              id="reset-pw"
+              type="password"
+              value={resetPasswordValue}
+              onChange={(e) => setResetPasswordValue(e.target.value)}
+              placeholder="Enter new password"
+              className="bg-slate-900 border-slate-600 text-white"
+              minLength={8}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-slate-500" onClick={() => !resettingPassword && setResetPasswordDialog(null)} disabled={resettingPassword}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-amber-600 hover:bg-amber-700"
+              onClick={handleResetPassword}
+              disabled={resettingPassword || resetPasswordValue.length < 8}
+            >
+              {resettingPassword ? "Resetting…" : "Reset password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!blockDialog} onOpenChange={() => !blocking && setBlockDialog(null)}>
         <DialogContent className="bg-slate-800 border-slate-700 text-white">
