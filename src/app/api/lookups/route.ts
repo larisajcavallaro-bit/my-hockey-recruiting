@@ -10,6 +10,10 @@ const VALID_CATEGORIES = [
   "coach_specialty",
   "player_evaluation",
   "area",
+  "position",
+  "gender",
+  "event_type",
+  "venue",
 ] as const;
 
 const DEFAULTS: Record<(typeof VALID_CATEGORIES)[number], string[]> = {
@@ -37,6 +41,10 @@ const DEFAULTS: Record<(typeof VALID_CATEGORIES)[number], string[]> = {
     "Game Sense",
     "Work Ethic",
   ],
+  position: ["Forward", "Defense", "Goalie"],
+  gender: ["Male", "Female"],
+  event_type: ["Camp", "Tournament", "ID Skate", "Tryouts", "Clinic"],
+  venue: [],
 } as const;
 
 export async function GET(request: Request) {
@@ -46,7 +54,7 @@ export async function GET(request: Request) {
 
     if (!category || !VALID_CATEGORIES.includes(category)) {
       return NextResponse.json(
-        { error: "Invalid category. Use: coach_title, birth_year, coach_specialty, area, or player_evaluation" },
+        { error: "Invalid category. Use: coach_title, birth_year, coach_specialty, area, player_evaluation, position, gender, event_type, or venue" },
         { status: 400 },
       );
     }

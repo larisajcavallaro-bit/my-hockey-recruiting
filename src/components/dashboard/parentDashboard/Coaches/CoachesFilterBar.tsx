@@ -10,6 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  useLookupOptions,
+  useLeagueOptions,
+  useTeamOptions,
+} from "@/hooks/useFilterOptions";
 
 interface Props {
   search: string;
@@ -40,6 +45,11 @@ const CoachesFilterBar = ({
   location,
   setLocation,
 }: Props) => {
+  const locations = useLookupOptions("area");
+  const leagues = useLeagueOptions();
+  const teams = useTeamOptions();
+  const birthYears = useLookupOptions("birth_year");
+
   return (
     <div className="p-6 rounded-[32px] bg-[#E5E7EB]/50 border space-y-4">
       {/* Search */}
@@ -70,8 +80,11 @@ const CoachesFilterBar = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Cities</SelectItem>
-              <SelectItem value="Las Vegas, NV">Las Vegas, NV</SelectItem>
-              <SelectItem value="Toronto, ON">Toronto, ON</SelectItem>
+              {locations.map((loc) => (
+                <SelectItem key={loc} value={loc}>
+                  {loc}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -83,9 +96,11 @@ const CoachesFilterBar = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Leagues</SelectItem>
-              <SelectItem value="Elite League">Elite League</SelectItem>
-              <SelectItem value="Ontario League">Ontario League</SelectItem>
-              <SelectItem value="Local League">Local League</SelectItem>
+              {leagues.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {l}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -97,11 +112,11 @@ const CoachesFilterBar = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Teams</SelectItem>
-              <SelectItem value="Vegas Golden Knights">
-                Vegas Golden Knights
-              </SelectItem>
-              <SelectItem value="Toronto Stars">Toronto Stars</SelectItem>
-              <SelectItem value="Maple Leafs II">Maple Leafs II</SelectItem>
+              {teams.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -113,9 +128,11 @@ const CoachesFilterBar = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Years</SelectItem>
-              <SelectItem value="1990">1990</SelectItem>
-              <SelectItem value="1985">1985</SelectItem>
-              <SelectItem value="1978">1978</SelectItem>
+              {birthYears.map((y) => (
+                <SelectItem key={y} value={y}>
+                  {y}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>

@@ -10,6 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  useLookupOptions,
+  useLevelOptions,
+} from "@/hooks/useFilterOptions";
 
 interface Props {
   search: string;
@@ -45,6 +49,12 @@ const PlayersFilterBar = ({
   location,
   setLocation,
 }: Props) => {
+  const birthYears = useLookupOptions("birth_year");
+  const positions = useLookupOptions("position");
+  const levels = useLevelOptions();
+  const genders = useLookupOptions("gender");
+  const locations = useLookupOptions("area");
+
   return (
     <div className="p-6 rounded-[32px] bg-[#E5E7EB]/50 border space-y-4">
       {/* Search */}
@@ -74,9 +84,11 @@ const PlayersFilterBar = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Years</SelectItem>
-              <SelectItem value="2010">2010</SelectItem>
-              <SelectItem value="2011">2011</SelectItem>
-              <SelectItem value="2012">2012</SelectItem>
+              {birthYears.map((y) => (
+                <SelectItem key={y} value={y}>
+                  {y}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -88,9 +100,11 @@ const PlayersFilterBar = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Positions</SelectItem>
-              <SelectItem value="Forward">Forward</SelectItem>
-              <SelectItem value="Defense">Defense</SelectItem>
-              <SelectItem value="Goalie">Goalie</SelectItem>
+              {positions.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -102,8 +116,11 @@ const PlayersFilterBar = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Levels</SelectItem>
-              <SelectItem value="AAA">AAA</SelectItem>
-              <SelectItem value="AA">AA</SelectItem>
+              {levels.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {l}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -115,8 +132,11 @@ const PlayersFilterBar = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">Select Gender</SelectItem>
-              <SelectItem value="Male">Male</SelectItem>
-              <SelectItem value="Female">Female</SelectItem>
+              {genders.map((g) => (
+                <SelectItem key={g} value={g}>
+                  {g}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -129,8 +149,11 @@ const PlayersFilterBar = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">City, State</SelectItem>
-              <SelectItem value="Toronto, ON">Toronto, ON</SelectItem>
-              <SelectItem value="Vancouver, BC">Vancouver, BC</SelectItem>
+              {locations.map((loc) => (
+                <SelectItem key={loc} value={loc}>
+                  {loc}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>

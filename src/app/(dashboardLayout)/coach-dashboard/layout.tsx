@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import SideBar from "@/components/dashboard/coachDashboard/overview/SideBar";
 import DashboardHeader from "@/components/dashboard/parentDashboard/overview/DashboardHeader";
+import PageHelpTip from "@/components/dashboard/PageHelpTip";
 
-export default function ParentDashboardLayout({
+export default function CoachDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -43,6 +44,9 @@ export default function ParentDashboardLayout({
         >
           {children}
         </main>
+
+        {/* Floating help icon - page-specific tips */}
+        <PageHelpTip />
       </div>
     </div>
   );

@@ -48,7 +48,10 @@ export async function GET(
       website: sub.website,
     };
 
-    return NextResponse.json({ school });
+    return NextResponse.json(
+      { school },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (error) {
     console.error("School fetch error:", error);
     return NextResponse.json(

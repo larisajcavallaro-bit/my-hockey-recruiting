@@ -76,20 +76,29 @@ export default function CoachProfilePage() {
 
   const [coach, setCoach] = useState<CoachDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [disputingId, setDisputingId] = useState<string | null>(null);
 
   const fetchCoach = useCallback(() => {
     if (!coachProfileId) {
       setLoading(false);
+      setLoadError(null);
       return;
     }
     setLoading(true);
-    fetch(`/api/coaches/${coachProfileId}`)
-      .then((r) => r.json())
-      .then((data) => {
+    setLoadError(null);
+    fetch(`/api/coaches/${coachProfileId}`, { cache: "no-store" })
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) {
+          setCoach(null);
+          setLoadError(typeof data?.error === "string" ? data.error : "Failed to load profile");
+          return;
+        }
         if (data.error) {
           setCoach(null);
+          setLoadError(typeof data.error === "string" ? data.error : "Failed to load profile");
           return;
         }
         setCoach({
@@ -125,7 +134,10 @@ export default function CoachProfilePage() {
           ),
         });
       })
-      .catch(() => setCoach(null))
+      .catch((err) => {
+        setCoach(null);
+        setLoadError(err instanceof Error ? err.message : "Network error. Please check your connection.");
+      })
       .finally(() => setLoading(false));
   }, [coachProfileId]);
 
@@ -174,8 +186,13 @@ export default function CoachProfilePage() {
 
   if (!coach) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-sub-text1/80">Failed to load profile.</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-sub-text1/80 text-center">
+          {loadError ?? "Failed to load profile."}
+        </p>
+        <Button variant="outline" onClick={() => fetchCoach()}>
+          Try again
+        </Button>
       </div>
     );
   }

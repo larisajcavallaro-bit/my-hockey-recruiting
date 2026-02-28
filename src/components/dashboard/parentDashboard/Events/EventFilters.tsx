@@ -10,8 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import { EVENT_TYPES } from "@/constants/events";
+import {
+  useLookupOptions,
+  useLeagueOptions,
+  useTeamOptions,
+} from "@/hooks/useFilterOptions";
 
 interface FilterState {
   coachName: string;
@@ -31,6 +34,12 @@ export const EventFilters = ({
   filters,
   onFiltersChange,
 }: EventFiltersProps) => {
+  const eventTypes = useLookupOptions("event_type");
+  const venues = useLookupOptions("venue");
+  const leagues = useLeagueOptions();
+  const teams = useTeamOptions();
+  const ageGroups = useLookupOptions("birth_year");
+
   return (
     <div className="space-y-4">
       {/* Search */}
@@ -68,7 +77,7 @@ export const EventFilters = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Types</SelectItem>
-              {EVENT_TYPES.map((type) => (
+              {eventTypes.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type}
                 </SelectItem>
@@ -77,7 +86,7 @@ export const EventFilters = ({
           </SelectContent>
         </Select>
 
-        {/* Location Filter */}
+        {/* Location / Venue Filter */}
         <Select
           value={filters.location}
           onValueChange={(value) =>
@@ -87,15 +96,17 @@ export const EventFilters = ({
           <SelectTrigger className="w-full bg-secondary-foreground/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-sub-text1/80 h-auto focus:ring-2 focus:ring-button-clr1">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              <SelectValue placeholder="Full Address" />
+              <SelectValue placeholder="Location / Venue" />
             </div>
           </SelectTrigger>
           <SelectContent>
             <div className="text-sub-text1">
-              <SelectItem value="all">All Addresses</SelectItem>
-              <SelectItem value="1200 Ice Rink Blvd, Chicago, IL 60601, USA">Chicago Arena</SelectItem>
-              <SelectItem value="2600 W Belmont Ave, Chicago, IL 60618, USA">Northern Ice Center</SelectItem>
-              <SelectItem value="100 Arena Dr, Detroit, MI 48226, USA">Detroit Arena</SelectItem>
+              <SelectItem value="all">All Locations</SelectItem>
+              {venues.map((v) => (
+                <SelectItem key={v} value={v}>
+                  {v}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -113,9 +124,11 @@ export const EventFilters = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Leagues</SelectItem>
-              <SelectItem value="Elite League">Elite League</SelectItem>
-              <SelectItem value="AAA League">AAA League</SelectItem>
-              <SelectItem value="Rep League">Rep League</SelectItem>
+              {leagues.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {l}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -133,9 +146,11 @@ export const EventFilters = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="all">All Teams</SelectItem>
-              <SelectItem value="Toronto Elite">Toronto Elite</SelectItem>
-              <SelectItem value="Team One">Team One</SelectItem>
-              <SelectItem value="Team Two">Team Two</SelectItem>
+              {teams.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>
@@ -153,10 +168,11 @@ export const EventFilters = ({
           <SelectContent>
             <div className="text-sub-text1">
               <SelectItem value="All Ages">All Ages</SelectItem>
-              <SelectItem value="2012">2012</SelectItem>
-              <SelectItem value="2010">2010</SelectItem>
-              <SelectItem value="2008">2008</SelectItem>
-              <SelectItem value="2006">2006</SelectItem>
+              {ageGroups.map((y) => (
+                <SelectItem key={y} value={y}>
+                  {y}
+                </SelectItem>
+              ))}
             </div>
           </SelectContent>
         </Select>

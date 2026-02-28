@@ -1,1 +1,1 @@
-export const EVENT_TYPES = ["Camp", "Tournament", "ID Skate", "Tryouts", "Clinic"] as const;
+// Event types are now admin-managed via /api/lookups?category=event_type

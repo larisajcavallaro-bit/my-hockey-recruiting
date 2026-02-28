@@ -62,7 +62,10 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ schools });
+    return NextResponse.json(
+      { schools },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (error) {
     console.error("Teams and schools fetch error:", error);
     return NextResponse.json(

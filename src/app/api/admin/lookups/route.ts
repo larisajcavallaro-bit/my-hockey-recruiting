@@ -13,6 +13,10 @@ const VALID_CATEGORIES = [
   "league",
   "level",
   "team",
+  "position",
+  "gender",
+  "event_type",
+  "venue",
 ] as const;
 
 const createSchema = z.object({

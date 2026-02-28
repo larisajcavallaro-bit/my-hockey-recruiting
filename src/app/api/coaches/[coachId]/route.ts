@@ -65,8 +65,8 @@ export async function GET(
       return NextResponse.json({ error: "Coach not found" }, { status: 404 });
     }
 
-    // Block check: hide coach profile when blocker/blocked relationship exists
-    if (session?.user?.id) {
+    // Block check: hide coach profile when blocker/blocked relationship exists (skip when viewing own profile)
+    if (session?.user?.id && session.user.id !== coach.userId) {
       const blockExists = await prisma.block.findFirst({
         where: {
           OR: [

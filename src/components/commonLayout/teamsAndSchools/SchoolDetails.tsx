@@ -45,6 +45,7 @@ interface SchoolDetailsProps {
 }
 
 const ALL = "__all__";
+const AGE_BRACKETS = ["U6", "U8", "U10", "U12", "U14", "U16", "U18", "U20"] as const;
 
 export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
@@ -60,7 +61,7 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
     let cancelled = false;
     async function fetchSchool() {
       try {
-        const res = await fetch(`/api/teams-and-schools/${schoolSlug}`);
+        const res = await fetch(`/api/teams-and-schools/${schoolSlug}`, { cache: "no-store" });
         if (res.status === 404) {
           if (!cancelled) setSchoolInfo(null);
           return;
@@ -85,7 +86,7 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
       if (filterGender && filterGender !== ALL) params.set("gender", filterGender);
       if (filterLeague && filterLeague !== ALL) params.set("league", filterLeague);
       const qs = params.toString();
-      const res = await fetch(`/api/teams-and-schools/${schoolSlug}/reviews${qs ? `?${qs}` : ""}`);
+      const res = await fetch(`/api/teams-and-schools/${schoolSlug}/reviews${qs ? `?${qs}` : ""}`, { cache: "no-store" });
       const data = await res.json();
       const reviewsData = data.reviews ?? [];
       setReviews(reviewsData);
@@ -113,11 +114,8 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
       : 0;
   const reviewCount = reviews.length;
 
-  const uniqueAgeBrackets = [...new Set(allReviewsForFilterOptions.flatMap((r) => r.ageBracket ?? []).filter(Boolean))].sort();
   const uniqueGenders = [...new Set(allReviewsForFilterOptions.map((r) => r.gender).filter(Boolean))].sort() as string[];
   const uniqueLeagues = [...new Set(allReviewsForFilterOptions.map((r) => r.league).filter(Boolean))].sort() as string[];
-
-  const hasFilters = uniqueAgeBrackets.length > 0 || uniqueGenders.length > 0 || uniqueLeagues.length > 0;
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -201,23 +199,23 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
                 </FeatureGate>
               </div>
 
-              {hasFilters && (
-                <div className="flex flex-wrap items-center gap-3 py-2 border-y">
-                  <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground">Filter:</span>
-                  <Select value={filterAgeBracket} onValueChange={setFilterAgeBracket}>
-                    <SelectTrigger className="w-[160px]">
-                      <SelectValue placeholder="Age" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ALL}>All ages</SelectItem>
-                      {uniqueAgeBrackets.map((a) => (
-                        <SelectItem key={a} value={a}>
-                          {a}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="flex flex-wrap items-center gap-3 py-2 border-y">
+                <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-sm text-muted-foreground">Filter:</span>
+                <Select value={filterAgeBracket} onValueChange={setFilterAgeBracket}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Age bracket" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>All ages (U6–U20)</SelectItem>
+                    {AGE_BRACKETS.map((a) => (
+                      <SelectItem key={a} value={a}>
+                        {a}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(uniqueGenders.length > 0 || uniqueLeagues.length > 0) && (
                   <Select value={filterGender} onValueChange={setFilterGender}>
                     <SelectTrigger className="w-[130px]">
                       <SelectValue placeholder="Boys/Girls" />
@@ -244,8 +242,8 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
+                )}
+              </div>
 
               <div className="space-y-8">
                 {loading ? (

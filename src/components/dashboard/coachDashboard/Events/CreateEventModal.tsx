@@ -1,11 +1,10 @@
 // components/CreateEventModal.tsx
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Camera, X } from "lucide-react";
 import { toast } from "sonner";
 import { AddressAutocomplete } from "@/components/ui/AddressAutocomplete";
-import { EVENT_TYPES } from "@/constants/events";
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
 const EVENT_IMAGE_SIZE = { w: 600, h: 400 };
@@ -60,7 +59,16 @@ export default function CreateEventModal({
 }: ModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [eventTypes, setEventTypes] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/lookups?category=event_type", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setEventTypes(d.lookups ?? []))
+      .catch(() => setEventTypes([]));
+  }, []);
+
   const [form, setForm] = useState({
     title: "",
     eventType: "",
@@ -248,7 +256,7 @@ export default function CreateEventModal({
                 className={`${inputClass} appearance-none cursor-pointer pr-10`}
               >
                 <option value="">Select type</option>
-                {EVENT_TYPES.map((t) => (
+                {eventTypes.map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>

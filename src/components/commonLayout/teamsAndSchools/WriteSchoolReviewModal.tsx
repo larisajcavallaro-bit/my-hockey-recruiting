@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -29,6 +28,7 @@ const PLACEHOLDER = "__pl__";
 const GENDER_OPTIONS = ["Boys", "Girls"] as const;
 const AGE_BRACKETS = ["U6", "U8", "U10", "U12", "U14", "U16", "U18", "U20"] as const;
 
+/** Format as "FirstName LastInitial." for review display */
 function formatAuthorName(name: string | null | undefined): string {
   if (!name?.trim()) return "";
   const parts = name.trim().split(/\s+/);
@@ -44,7 +44,7 @@ export default function WriteSchoolReviewModal({
 }: WriteSchoolReviewModalProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [ageBracket, setAgeBracket] = useState<string[]>([]);
+  const [ageBracket, setAgeBracket] = useState<string>("");
   const [gender, setGender] = useState("");
   const [league, setLeague] = useState("");
   const [authorName, setAuthorName] = useState("");
@@ -73,20 +73,14 @@ export default function WriteSchoolReviewModal({
       .then((data) => setLeagues(data?.leagues ?? []));
   }, [open]);
 
-  const handleAgeToggle = (age: string) => {
-    setAgeBracket((prev) =>
-      prev.includes(age) ? prev.filter((a) => a !== age) : [...prev, age]
-    );
-  };
-
   const handleSubmit = async () => {
     setError(null);
     if (rating === 0) {
       setError("Please select a star rating.");
       return;
     }
-    if (ageBracket.length === 0) {
-      setError("Please select at least one age your kid played.");
+    if (!ageBracket) {
+      setError("Please select the age bracket your kid played (U6–U20).");
       return;
     }
     if (!gender || gender === PLACEHOLDER) {
@@ -106,7 +100,7 @@ export default function WriteSchoolReviewModal({
         body: JSON.stringify({
           rating,
           text: comment.trim() || undefined,
-          ageBracket,
+          ageBracket: [ageBracket],
           gender,
           league,
         }),
@@ -121,7 +115,7 @@ export default function WriteSchoolReviewModal({
       setOpen(false);
       setRating(0);
       setComment("");
-      setAgeBracket([]);
+      setAgeBracket("");
       setGender("");
       setLeague("");
       onSubmitted?.();
@@ -150,25 +144,20 @@ export default function WriteSchoolReviewModal({
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Select the age(s) your kid played *</p>
-            <p className="text-xs text-muted-foreground">You can select multiple if they played at different ages.</p>
-            <div className="flex flex-wrap gap-2">
-              {AGE_BRACKETS.map((age) => (
-                <div
-                  key={age}
-                  className="flex items-center space-x-2 border border-input rounded-md px-3 py-2"
-                >
-                  <Checkbox
-                    id={`age-${age}`}
-                    checked={ageBracket.includes(age)}
-                    onCheckedChange={() => handleAgeToggle(age)}
-                  />
-                  <label htmlFor={`age-${age}`} className="text-sm cursor-pointer">
+            <p className="text-sm font-medium">What age bracket was your kid? (U6–U20) *</p>
+            <Select value={ageBracket || PLACEHOLDER} onValueChange={(v) => setAgeBracket(v === PLACEHOLDER ? "" : v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select age bracket" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={PLACEHOLDER}>Select age bracket</SelectItem>
+                {AGE_BRACKETS.map((age) => (
+                  <SelectItem key={age} value={age}>
                     {age}
-                  </label>
-                </div>
-              ))}
-            </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface PlayersFilterBarProps {
@@ -25,6 +25,22 @@ const PlayersFilterBar: React.FC<PlayersFilterBarProps> = ({
   level = "all",
   setLevel,
 }) => {
+  const [birthYears, setBirthYears] = useState<string[]>([]);
+  const [positions, setPositions] = useState<string[]>([]);
+  const [levels, setLevels] = useState<string[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/lookups?category=birth_year", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/lookups?category=position", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/levels?limit=100", { cache: "no-store" }).then((r) => r.json()),
+    ]).then(([by, pos, lv]) => {
+      setBirthYears((by.lookups ?? []).slice(0, 20));
+      setPositions(pos.lookups ?? []);
+      setLevels((lv.levels ?? []).map((l: { name: string }) => l.name));
+    }).catch(() => {});
+  }, []);
+
   const selectWrapperClass = "flex flex-col gap-1.5 flex-1";
   const selectClass =
     "bg-secondary-foreground/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-sub-text1/80 focus:outline-none focus:ring-1 focus:ring-blue-500 appearance-none w-full cursor-pointer backdrop-blur-sm";
@@ -43,7 +59,7 @@ const PlayersFilterBar: React.FC<PlayersFilterBarProps> = ({
               onChange={(e) => setBirthYear?.(e.target.value)}
             >
               <option value="all">All Years</option>
-              {[2010, 2011, 2012, 2009, 2008].map((y) => (
+              {birthYears.map((y) => (
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
@@ -61,9 +77,9 @@ const PlayersFilterBar: React.FC<PlayersFilterBarProps> = ({
               onChange={(e) => setPosition?.(e.target.value)}
             >
               <option value="all">All Positions</option>
-              <option value="Forward">Forward</option>
-              <option value="Defense">Defense</option>
-              <option value="Goalie">Goalie</option>
+              {positions.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
             </select>
             <ChevronDown className="absolute right-3 top-3 text-sub-text1/80 pointer-events-none" size={16} />
           </div>
@@ -79,9 +95,9 @@ const PlayersFilterBar: React.FC<PlayersFilterBarProps> = ({
               onChange={(e) => setLevel?.(e.target.value)}
             >
               <option value="all">All Levels</option>
-              <option value="AAA">AAA</option>
-              <option value="AA">AA</option>
-              <option value="A">A</option>
+              {levels.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
             </select>
             <ChevronDown className="absolute right-3 top-3 text-sub-text1/80 pointer-events-none" size={16} />
           </div>

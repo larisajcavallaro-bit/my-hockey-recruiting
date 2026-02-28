@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { AddressAutocomplete } from "@/components/ui/AddressAutocomplete";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, Camera, X } from "lucide-react";
-import { EVENT_TYPES } from "@/constants/events";
 import { toast } from "sonner";
 
 const inputClass =
@@ -78,7 +77,15 @@ export function EditEventModal({ event, onSuccess }: EditEventModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [eventTypes, setEventTypes] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/lookups?category=event_type", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setEventTypes(d.lookups ?? []))
+      .catch(() => setEventTypes([]));
+  }, []);
 
   const toDatetimeLocal = (iso: string | undefined) => {
     if (!iso) return "";
@@ -245,7 +252,7 @@ export function EditEventModal({ event, onSuccess }: EditEventModalProps) {
                   className={`${inputClass} appearance-none pr-10`}
                 >
                   <option value="">Select type</option>
-                  {EVENT_TYPES.map((t) => (
+                  {eventTypes.map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>

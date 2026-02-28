@@ -65,9 +65,9 @@ export default function AdminSchoolsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Schools & Programs</h1>
+        <h1 className="text-2xl font-bold text-white">Teams and Schools</h1>
         <p className="text-slate-400 mt-1">
-          Add and manage schools and programs on the Teams and Schools page.
+          Add and manage teams, schools, and programs. Changes appear on the Teams and Schools page immediately (contact info, address, etc.).
         </p>
       </div>
 

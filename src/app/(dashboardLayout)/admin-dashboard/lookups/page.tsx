@@ -25,7 +25,11 @@ const FLAT_CATEGORIES = [
   { value: "coach_title", label: "Coach Title" },
   { value: "birth_year", label: "Birth Year" },
   { value: "coach_specialty", label: "Coach Specialty" },
-  { value: "area", label: "Area" },
+  { value: "area", label: "Area (Location)" },
+  { value: "position", label: "Position" },
+  { value: "gender", label: "Gender" },
+  { value: "event_type", label: "Event Type" },
+  { value: "venue", label: "Venue" },
 ] as const;
 
 type Lookup = { id: string; category: string; value: string; sortOrder: number };

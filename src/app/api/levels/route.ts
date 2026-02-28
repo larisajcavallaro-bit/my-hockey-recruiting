@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q")?.toLowerCase().trim();
-    const take = Math.min(50, parseInt(searchParams.get("limit") || "50", 10) || 50);
+    const take = Math.min(200, parseInt(searchParams.get("limit") || "100", 10) || 100);
 
     const where = q
       ? { category: "level" as const, value: { contains: q, mode: "insensitive" as const } }

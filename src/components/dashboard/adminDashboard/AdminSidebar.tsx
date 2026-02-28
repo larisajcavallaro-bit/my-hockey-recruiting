@@ -25,7 +25,7 @@ const NAV_ITEMS = [
   { title: "Contact Messages", href: "/admin-dashboard/contact-messages", icon: MessageSquare },
   { title: "Review Disputes", href: "/admin-dashboard/disputes", icon: AlertTriangle },
   { title: "Training Submissions", href: "/admin-dashboard/facility-submissions", icon: Building2 },
-  { title: "Schools & Programs", href: "/admin-dashboard/schools", icon: GraduationCap },
+  { title: "Teams & Schools", href: "/admin-dashboard/schools", icon: GraduationCap },
   { title: "Blog Posts", href: "/admin-dashboard/blog-posts", icon: FileText },
   { title: "Users", href: "/admin-dashboard/users", icon: Users },
   { title: "Zapier", href: "/admin-dashboard/zapier", icon: Plug },

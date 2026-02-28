@@ -56,7 +56,10 @@ export async function GET(
       league: r.league,
     }));
 
-    return NextResponse.json({ reviews: formatted });
+    return NextResponse.json(
+      { reviews: formatted },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (error) {
     console.error("Get school reviews error:", error);
     return NextResponse.json(

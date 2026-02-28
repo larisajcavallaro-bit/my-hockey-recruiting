@@ -32,7 +32,7 @@ export default function TeamsAndSchoolsGrid() {
     async function fetchSchools() {
       try {
         setError(null);
-        const res = await fetch("/api/teams-and-schools");
+        const res = await fetch("/api/teams-and-schools", { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to load");
         const data = await res.json();
         if (!cancelled && Array.isArray(data.schools)) {

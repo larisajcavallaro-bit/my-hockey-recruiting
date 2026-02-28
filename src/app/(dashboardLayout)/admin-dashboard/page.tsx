@@ -78,7 +78,7 @@ export default function AdminOverviewPage() {
       icon: Building2,
     },
     {
-      title: "Schools & Programs",
+      title: "Teams & Schools",
       value: "Manage",
       href: "/admin-dashboard/schools",
       icon: GraduationCap,
