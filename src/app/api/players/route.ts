@@ -111,7 +111,8 @@ export async function GET(request: Request) {
       };
       const effectivePlanId = getEffectivePlanForSort(p);
       const isOwn = parentProfileId && p.parentId === parentProfileId;
-      const hasContactAccess = isOwn; // Coaches/parents with approved request would need separate check
+      const role = (session?.user as { role?: string })?.role;
+      const hasContactAccess = isOwn || role === "ADMIN"; // Admins get Elite visibility
       return maskPlayerByPlan(base, effectivePlanId, !!hasContactAccess);
     });
 

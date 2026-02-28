@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,12 +19,18 @@ import { toast } from "sonner";
 
 export default function ContactUs() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const topicParam = searchParams.get("topic");
+    if (topicParam) setTopic(topicParam);
+  }, [searchParams]);
 
   useEffect(() => {
     if (session?.user) {
@@ -194,7 +201,7 @@ export default function ContactUs() {
                     value="info-correction"
                     className="py-3 cursor-pointer"
                   >
-                    Missing or incorrect team, league, or level information
+                    Missing or incorrect team, school, league, or level information
                   </SelectItem>
                   <SelectItem
                     value="head-coach-dispute"

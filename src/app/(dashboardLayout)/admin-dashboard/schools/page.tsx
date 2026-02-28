@@ -11,6 +11,7 @@ import AdminEditSchoolModal from "@/components/dashboard/adminDashboard/AdminEdi
 
 type School = {
   id: string;
+  type?: string;
   name: string;
   address: string;
   city: string;
@@ -91,7 +92,18 @@ export default function AdminSchoolsPage() {
                   className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-lg bg-slate-700/50 border border-slate-600"
                 >
                   <div>
-                    <span className="font-medium text-white">{s.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-white">{s.name}</span>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded ${
+                          s.type === "school"
+                            ? "bg-blue-900/50 text-blue-200"
+                            : "bg-amber-900/50 text-amber-200"
+                        }`}
+                      >
+                        {s.type === "school" ? "School" : "Team"}
+                      </span>
+                    </div>
                     <p className="text-slate-400 text-sm">
                       {s.address}, {s.city} {s.zipCode}
                     </p>

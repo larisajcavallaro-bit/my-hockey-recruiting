@@ -66,14 +66,15 @@ export async function POST(
     const coachProfileId = (session.user as { coachProfileId?: string | null })
       .coachProfileId;
 
-    if (!parentProfileId && !coachProfileId) {
+    const role = (session.user as { role?: string })?.role;
+    if (!parentProfileId && !coachProfileId && role !== "ADMIN") {
       return NextResponse.json(
         { error: "Only parents and coaches can leave facility reviews" },
         { status: 403 }
       );
     }
 
-    // Check Gold+ for parents; coaches are allowed (treated as Gold+)
+    // Check Gold+ for parents; coaches allowed (Gold+); admins get Elite visibility
     let planId: string | null = null;
     if (parentProfileId) {
       const p = await prisma.parentProfile.findUnique({
@@ -85,7 +86,8 @@ export async function POST(
     if (coachProfileId && !parentProfileId) {
       planId = "gold"; // coaches allowed to submit facility reviews
     }
-    if (!hasFeature(planId ?? undefined, "facility_reviews")) {
+    if (role === "ADMIN") planId = "elite"; // admins get Elite visibility
+    if (!hasFeature(planId ?? undefined, "facility_reviews", { asAdmin: role === "ADMIN" })) {
       return NextResponse.json(
         {
           error:

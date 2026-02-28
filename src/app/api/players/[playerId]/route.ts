@@ -77,7 +77,8 @@ export async function GET(
       }
     }
 
-    let hasContactAccess = isOwnPlayer;
+    const role = (session?.user as { role?: string })?.role;
+    let hasContactAccess = isOwnPlayer || role === "ADMIN"; // Admins get Elite visibility
     if (!hasContactAccess && parentProfileId && player.parentId !== parentProfileId) {
       const req = await prisma.parentContactRequest.findUnique({
         where: {

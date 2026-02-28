@@ -25,7 +25,10 @@ interface WriteSchoolReviewModalProps {
 }
 
 const PLACEHOLDER = "__pl__";
-const GENDER_OPTIONS = ["Boys", "Girls"] as const;
+const GENDER_OPTIONS = [
+  { value: "Boys", label: "Boys Program" },
+  { value: "Girls", label: "Girls Program" },
+] as const;
 const AGE_BRACKETS = ["U6", "U8", "U10", "U12", "U14", "U16", "U18", "U20"] as const;
 
 /** Format as "FirstName LastInitial." for review display */
@@ -44,7 +47,8 @@ export default function WriteSchoolReviewModal({
 }: WriteSchoolReviewModalProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [ageBracket, setAgeBracket] = useState<string>("");
+  const [ageBracketFrom, setAgeBracketFrom] = useState<string>("");
+  const [ageBracketTo, setAgeBracketTo] = useState<string>("");
   const [gender, setGender] = useState("");
   const [league, setLeague] = useState("");
   const [authorName, setAuthorName] = useState("");
@@ -79,12 +83,14 @@ export default function WriteSchoolReviewModal({
       setError("Please select a star rating.");
       return;
     }
-    if (!ageBracket) {
-      setError("Please select the age bracket your kid played (U6–U20).");
+    if (!ageBracketFrom || !ageBracketTo) {
+      setError("Please select the age bracket range they played (From and To).");
       return;
     }
-    if (!gender || gender === PLACEHOLDER) {
-      setError("Please select Boys or Girls.");
+    const fromIdx = AGE_BRACKETS.indexOf(ageBracketFrom as typeof AGE_BRACKETS[number]);
+    const toIdx = AGE_BRACKETS.indexOf(ageBracketTo as typeof AGE_BRACKETS[number]);
+    if (fromIdx > toIdx) {
+      setError("Start age bracket must be before or same as end.");
       return;
     }
     if (!league || league === PLACEHOLDER) {
@@ -100,8 +106,8 @@ export default function WriteSchoolReviewModal({
         body: JSON.stringify({
           rating,
           text: comment.trim() || undefined,
-          ageBracket: [ageBracket],
-          gender,
+          ageBracket: AGE_BRACKETS.slice(fromIdx, toIdx + 1),
+          gender: gender && gender !== PLACEHOLDER ? gender : undefined,
           league,
         }),
       });
@@ -115,7 +121,8 @@ export default function WriteSchoolReviewModal({
       setOpen(false);
       setRating(0);
       setComment("");
-      setAgeBracket("");
+      setAgeBracketFrom("");
+      setAgeBracketTo("");
       setGender("");
       setLeague("");
       onSubmitted?.();
@@ -144,33 +151,54 @@ export default function WriteSchoolReviewModal({
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">What age bracket was your kid? (U6–U20) *</p>
-            <Select value={ageBracket || PLACEHOLDER} onValueChange={(v) => setAgeBracket(v === PLACEHOLDER ? "" : v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select age bracket" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={PLACEHOLDER}>Select age bracket</SelectItem>
-                {AGE_BRACKETS.map((age) => (
-                  <SelectItem key={age} value={age}>
-                    {age}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <p className="text-sm font-medium">What age bracket did your player start & end playing here? (U6–U20) *</p>
+            <div className="flex gap-0.5 items-end">
+              <div className="flex-1">
+                <label className="text-xs text-muted-foreground block mb-1">From</label>
+                <Select value={ageBracketFrom || PLACEHOLDER} onValueChange={(v) => setAgeBracketFrom(v === PLACEHOLDER ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Start" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PLACEHOLDER}>Start</SelectItem>
+                    {AGE_BRACKETS.map((age) => (
+                      <SelectItem key={age} value={age}>
+                        {age}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-muted-foreground block mb-1">To</label>
+                <Select value={ageBracketTo || PLACEHOLDER} onValueChange={(v) => setAgeBracketTo(v === PLACEHOLDER ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="End" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PLACEHOLDER}>End</SelectItem>
+                    {AGE_BRACKETS.map((age) => (
+                      <SelectItem key={age} value={age}>
+                        {age}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Boys or Girls *</p>
+            <p className="text-sm font-medium">Boys Program or Girls Program (optional)</p>
             <Select value={gender || PLACEHOLDER} onValueChange={(v) => setGender(v === PLACEHOLDER ? "" : v)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select" />
+                <SelectValue placeholder="Select program" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={PLACEHOLDER}>Select</SelectItem>
+                <SelectItem value={PLACEHOLDER}>Select program</SelectItem>
                 {GENDER_OPTIONS.map((g) => (
-                  <SelectItem key={g} value={g}>
-                    {g}
+                  <SelectItem key={g.value} value={g.value}>
+                    {g.label}
                   </SelectItem>
                 ))}
               </SelectContent>

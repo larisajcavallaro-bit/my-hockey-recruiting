@@ -7,16 +7,21 @@ import { GENDER_OPTIONS, AGE_BRACKETS } from "@/constants/schools";
 export const dynamic = "force-dynamic";
 
 const createSchema = z.object({
+  type: z.enum(["team", "school"]).default("team"),
   name: z.string().min(2),
   address: z.string().min(5),
   city: z.string().min(2),
   zipCode: z.string().min(5),
   phone: z.string().optional(),
   website: z.string().url().or(z.literal("")),
+  boysWebsite: z.union([z.string().url(), z.literal("")]).optional(),
+  girlsWebsite: z.union([z.string().url(), z.literal("")]).optional(),
   description: z.string().min(10),
   imageUrl: z.string().optional(),
   gender: z.array(z.enum(GENDER_OPTIONS)).default([]),
   league: z.array(z.string()).default([]),
+  boysLeague: z.array(z.string()).default([]),
+  girlsLeague: z.array(z.string()).default([]),
   ageBracketFrom: z.enum(AGE_BRACKETS).optional(),
   ageBracketTo: z.enum(AGE_BRACKETS).optional(),
 });
@@ -101,16 +106,21 @@ export async function POST(request: Request) {
 
     const sub = await prisma.schoolSubmission.create({
       data: {
+        type: data.type ?? "team",
         name: data.name.trim(),
         address: data.address.trim(),
         city: data.city.trim(),
         zipCode: data.zipCode.trim(),
         phone: data.phone?.trim() || null,
         website: data.website?.trim() || null,
+        boysWebsite: data.boysWebsite?.trim() || null,
+        girlsWebsite: data.girlsWebsite?.trim() || null,
         description: data.description.trim(),
         imageUrl: data.imageUrl?.trim() || null,
         gender: data.gender,
         league: Array.isArray(data.league) ? data.league.filter((l) => l?.trim()) : [],
+        boysLeague: Array.isArray(data.boysLeague) ? data.boysLeague.filter((l) => l?.trim()) : [],
+        girlsLeague: Array.isArray(data.girlsLeague) ? data.girlsLeague.filter((l) => l?.trim()) : [],
         ageBracketFrom: data.ageBracketFrom ?? null,
         ageBracketTo: data.ageBracketTo ?? null,
         status: "approved",

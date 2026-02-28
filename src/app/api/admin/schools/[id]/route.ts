@@ -1,25 +1,46 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { GENDER_OPTIONS, AGE_BRACKETS } from "@/constants/schools";
 
 export const dynamic = "force-dynamic";
 
+// Accept URL, empty string, or null; normalize empty to null
+const optionalUrl = z
+  .union([z.string(), z.literal(null)])
+  .optional()
+  .transform((v) => {
+    const s = (v ?? "").toString().trim();
+    return s === "" ? null : s;
+  });
+
 const updateSchema = z.object({
+  type: z.enum(["team", "school"]).optional(),
   name: z.string().min(2).optional(),
   address: z.string().min(5).optional(),
   city: z.string().min(2).optional(),
   zipCode: z.string().min(5).optional(),
   phone: z.string().nullable().optional(),
-  website: z.union([z.string().url(), z.literal("")]).nullable().optional(),
+  website: optionalUrl.optional(),
+  boysWebsite: optionalUrl.optional(),
+  girlsWebsite: optionalUrl.optional(),
   description: z.string().min(10).optional(),
   imageUrl: z.string().nullable().optional(),
-  gender: z.array(z.enum(GENDER_OPTIONS)).optional(),
+  gender: z.array(z.string()).optional(),
   league: z.array(z.string()).optional(),
-  ageBracketFrom: z.enum(AGE_BRACKETS).nullable().optional(),
-  ageBracketTo: z.enum(AGE_BRACKETS).nullable().optional(),
-});
+  boysLeague: z.array(z.string()).optional(),
+  girlsLeague: z.array(z.string()).optional(),
+  ageBracketFrom: z.preprocess(
+    (v) => (v === "" ? null : v),
+    z.enum(AGE_BRACKETS).nullable().optional()
+  ),
+  ageBracketTo: z.preprocess(
+    (v) => (v === "" ? null : v),
+    z.enum(AGE_BRACKETS).nullable().optional()
+  ),
+}).strict(false);
 
 /** GET - single school (admin only) */
 export async function GET(
@@ -56,33 +77,59 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    return await handlePatch(request, params);
+  } catch (outerErr) {
+    const msg = outerErr instanceof Error ? outerErr.message : String(outerErr);
+    console.error("Admin school PATCH outer error:", msg, outerErr);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+async function handlePatch(
+  request: Request,
+  params: Promise<{ id: string }>
+) {
+  const { id } = await params;
+  try {
     const session = await auth();
     const role = (session?.user as { role?: string })?.role;
     if (role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
-    const { id } = await params;
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch (parseErr) {
+      console.error("Admin school update: body parse error", parseErr);
+      return NextResponse.json(
+        { error: "Invalid request body (e.g. too large or not JSON)" },
+        { status: 400 }
+      );
+    }
     const data = updateSchema.parse(body);
 
     const updateData: Record<string, unknown> = {};
+    if (data.type !== undefined) updateData.type = data.type;
     if (data.name !== undefined) updateData.name = data.name.trim();
     if (data.address !== undefined) updateData.address = data.address.trim();
     if (data.city !== undefined) updateData.city = data.city.trim();
     if (data.zipCode !== undefined) updateData.zipCode = data.zipCode.trim();
     if (data.phone !== undefined) updateData.phone = data.phone?.trim() || null;
     if (data.website !== undefined) updateData.website = data.website === "" || data.website === null ? null : data.website.trim();
+    if (data.boysWebsite !== undefined) updateData.boysWebsite = data.boysWebsite === "" || data.boysWebsite === null ? null : data.boysWebsite.trim();
+    if (data.girlsWebsite !== undefined) updateData.girlsWebsite = data.girlsWebsite === "" || data.girlsWebsite === null ? null : data.girlsWebsite.trim();
     if (data.description !== undefined) updateData.description = data.description.trim();
     if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl?.trim() || null;
     if (data.gender !== undefined) updateData.gender = data.gender;
     if (data.league !== undefined) updateData.league = Array.isArray(data.league) ? data.league.filter((l) => l?.trim()) : [];
+    if (data.boysLeague !== undefined) updateData.boysLeague = Array.isArray(data.boysLeague) ? data.boysLeague.filter((l) => l?.trim()) : [];
+    if (data.girlsLeague !== undefined) updateData.girlsLeague = Array.isArray(data.girlsLeague) ? data.girlsLeague.filter((l) => l?.trim()) : [];
     if (data.ageBracketFrom !== undefined) updateData.ageBracketFrom = data.ageBracketFrom;
     if (data.ageBracketTo !== undefined) updateData.ageBracketTo = data.ageBracketTo;
 
     await prisma.schoolSubmission.update({
       where: { id },
-      data: updateData,
+      data: updateData as Prisma.SchoolSubmissionUpdateInput,
     });
 
     return NextResponse.json({ success: true });
@@ -91,11 +138,19 @@ export async function PATCH(
       const msg = error.issues[0]?.message ?? "Invalid input";
       return NextResponse.json({ error: msg }, { status: 400 });
     }
-    console.error("Admin school update error:", error);
-    return NextResponse.json(
-      { error: "Failed to update school" },
-      { status: 500 }
-    );
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return NextResponse.json({ error: "School not found" }, { status: 404 });
+    }
+    const errMsg = error instanceof Error ? error.message : String(error);
+    // If the error mentions boysWebsite/girlsWebsite, the DB may be missing these columns
+    const needsSchemaSync =
+      /boysWebsite|girlsWebsite|boys_website|girls_website/i.test(errMsg) &&
+      /invalid|unknown|does not exist/i.test(errMsg);
+    const userMsg = needsSchemaSync
+      ? "Database schema is out of sync. Run: npm run db:push (see docs/DEPLOY.md)"
+      : errMsg || "Failed to update school";
+    console.error("Admin school update error:", errMsg, error);
+    return NextResponse.json({ error: userMsg }, { status: 500 });
   }
 }
 

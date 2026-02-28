@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import WriteSchoolReviewModal from "./WriteSchoolReviewModal";
 import FeatureGate from "@/components/subscription/FeatureGate";
@@ -38,6 +39,10 @@ type SchoolInfo = {
   image: string;
   description: string;
   website?: string | null;
+  boysWebsite?: string | null;
+  girlsWebsite?: string | null;
+  boysLeague?: string[];
+  girlsLeague?: string[];
 };
 
 interface SchoolDetailsProps {
@@ -181,12 +186,84 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
         </div>
       </div>
 
+      {/* Boys / Girls blocks */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <Card className="border-l-4 border-l-blue-600">
+          <CardContent className="p-5">
+            <h3 className="font-semibold text-lg mb-3">Boys</h3>
+            {(schoolInfo.boysWebsite || (schoolInfo.boysLeague?.length ?? 0) > 0) ? (
+              <div className="space-y-2 text-sm">
+                {schoolInfo.boysWebsite && (
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <a
+                      href={schoolInfo.boysWebsite.startsWith("http") ? schoolInfo.boysWebsite : `https://${schoolInfo.boysWebsite}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline truncate"
+                    >
+                      {schoolInfo.boysWebsite.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                    </a>
+                  </div>
+                )}
+                {(schoolInfo.boysLeague?.length ?? 0) > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Leagues: </span>
+                    <span className="font-medium">{schoolInfo.boysLeague!.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No boys program info.</p>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-pink-500">
+          <CardContent className="p-5">
+            <h3 className="font-semibold text-lg mb-3">Girls</h3>
+            {(schoolInfo.girlsWebsite || (schoolInfo.girlsLeague?.length ?? 0) > 0) ? (
+              <div className="space-y-2 text-sm">
+                {schoolInfo.girlsWebsite && (
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <a
+                      href={schoolInfo.girlsWebsite.startsWith("http") ? schoolInfo.girlsWebsite : `https://${schoolInfo.girlsWebsite}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline truncate"
+                    >
+                      {schoolInfo.girlsWebsite.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                    </a>
+                  </div>
+                )}
+                {(schoolInfo.girlsLeague?.length ?? 0) > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Leagues: </span>
+                    <span className="font-medium">{schoolInfo.girlsLeague!.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No girls program info.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardContent className="p-6">
               <h2 className="font-semibold text-lg mb-2">About</h2>
               <p className="text-muted-foreground leading-relaxed">{schoolInfo.description}</p>
+              <p className="mt-4">
+                <Link
+                  href="/contact-us?topic=info-correction"
+                  className="text-sm text-primary hover:underline"
+                >
+                  See something incorrect? Contact us to get it updated
+                </Link>
+              </p>
             </CardContent>
           </Card>
 
@@ -215,35 +292,36 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
                     ))}
                   </SelectContent>
                 </Select>
-                {(uniqueGenders.length > 0 || uniqueLeagues.length > 0) && (
-                  <>
-                    <Select value={filterGender} onValueChange={setFilterGender}>
-                      <SelectTrigger className="w-[130px]">
-                        <SelectValue placeholder="Boys/Girls" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ALL}>All</SelectItem>
-                        {uniqueGenders.map((g) => (
-                          <SelectItem key={g} value={g}>
-                            {g}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={filterLeague} onValueChange={setFilterLeague}>
-                      <SelectTrigger className="w-[160px]">
-                        <SelectValue placeholder="League" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ALL}>All leagues</SelectItem>
-                        {uniqueLeagues.map((l) => (
-                          <SelectItem key={l} value={l}>
-                            {l}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <Checkbox
+                    checked={filterGender === "Boys"}
+                    onCheckedChange={(checked) => setFilterGender(checked ? "Boys" : ALL)}
+                    className="border-slate-400"
+                  />
+                  <span className="text-sm text-muted-foreground">See Boys Reviews Only</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <Checkbox
+                    checked={filterGender === "Girls"}
+                    onCheckedChange={(checked) => setFilterGender(checked ? "Girls" : ALL)}
+                    className="border-slate-400"
+                  />
+                  <span className="text-sm text-muted-foreground">See Girls Reviews Only</span>
+                </label>
+                {uniqueLeagues.length > 0 && (
+                  <Select value={filterLeague} onValueChange={setFilterLeague}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder="League" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL}>All leagues</SelectItem>
+                      {uniqueLeagues.map((l) => (
+                        <SelectItem key={l} value={l}>
+                          {l}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               </div>
 

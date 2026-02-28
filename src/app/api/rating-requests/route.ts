@@ -140,11 +140,12 @@ export async function POST(request: Request) {
 
     const { playerId, coachProfileId, message } = parsed.data;
 
+    const role = (session.user as { role?: string })?.role;
     const parentProfile = await prisma.parentProfile.findUnique({
       where: { id: parentProfileId },
       select: { planId: true },
     });
-    if (!hasFeature(parentProfile?.planId, "coach_evaluations")) {
+    if (!hasFeature(parentProfile?.planId, "coach_evaluations", { asAdmin: role === "ADMIN" })) {
       return NextResponse.json(
         { error: "Coach evaluations require an Elite plan or higher. Upgrade to request player evaluations." },
         { status: 403 }

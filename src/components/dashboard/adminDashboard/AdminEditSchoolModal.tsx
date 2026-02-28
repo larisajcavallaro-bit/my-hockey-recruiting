@@ -63,32 +63,42 @@ function resizeImageFile(file: File, maxW: number, maxH: number): Promise<string
 }
 
 const formSchema = z.object({
+  type: z.enum(["team", "school"]).default("team"),
   name: z.string().min(2, "Required"),
   address: z.string().min(5, "Required"),
   city: z.string().min(2, "Required"),
   zipCode: z.string().min(5, "Required"),
   phone: z.string().optional(),
   website: z.string().url("Invalid URL").or(z.literal("")),
+  boysWebsite: z.string().url("Invalid URL").or(z.literal("")).optional(),
+  girlsWebsite: z.string().url("Invalid URL").or(z.literal("")).optional(),
   description: z.string().min(10, "Required"),
   imageUrl: z.string().optional(),
   gender: z.array(z.string()),
   league: z.array(z.string()),
+  boysLeague: z.array(z.string()),
+  girlsLeague: z.array(z.string()),
   ageBracketFrom: z.string().optional(),
   ageBracketTo: z.string().optional(),
 });
 
 type SchoolData = {
   id: string;
+  type?: string;
   name: string;
   address: string;
   city: string;
   zipCode: string;
   phone: string | null;
   website: string | null;
+  boysWebsite?: string | null;
+  girlsWebsite?: string | null;
   description: string;
   imageUrl?: string | null;
   gender: string[];
   league: string[];
+  boysLeague?: string[];
+  girlsLeague?: string[];
   ageBracketFrom: string | null;
   ageBracketTo: string | null;
 };
@@ -105,6 +115,7 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      type: "team",
       name: "",
       address: "",
       city: "",
@@ -115,6 +126,8 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
       imageUrl: "",
       gender: [],
       league: [],
+      boysLeague: [],
+      girlsLeague: [],
       ageBracketFrom: "",
       ageBracketTo: "",
     },
@@ -123,16 +136,21 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
   useEffect(() => {
     if (open) {
       form.reset({
+        type: school.type === "school" ? "school" : "team",
         name: school.name,
         address: school.address,
         city: school.city,
         zipCode: school.zipCode,
         phone: school.phone ?? "",
         website: school.website ?? "",
+        boysWebsite: school.boysWebsite ?? "",
+        girlsWebsite: school.girlsWebsite ?? "",
         description: school.description,
         imageUrl: school.imageUrl ?? "",
         gender: school.gender ?? [],
         league: school.league ?? [],
+        boysLeague: school.boysLeague ?? [],
+        girlsLeague: school.girlsLeague ?? [],
         ageBracketFrom: school.ageBracketFrom ?? "",
         ageBracketTo: school.ageBracketTo ?? "",
       });
@@ -170,8 +188,13 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
+          type: values.type,
           website: values.website || null,
+          boysWebsite: values.boysWebsite || null,
+          girlsWebsite: values.girlsWebsite || null,
           league: values.league,
+          boysLeague: values.boysLeague ?? [],
+          girlsLeague: values.girlsLeague ?? [],
           ageBracketFrom: values.ageBracketFrom || null,
           ageBracketTo: values.ageBracketTo || null,
           imageUrl: values.imageUrl || null,
@@ -179,9 +202,19 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
           gender: values.gender,
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const text = await res.text();
+      let data: { error?: string; _raw?: string } = {};
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { _raw: text.slice(0, 200) };
+        }
+      }
       if (!res.ok) {
-        toast.error(data?.error ?? "Failed to update school");
+        const msg = data.error ?? data._raw ?? "Failed to update school";
+        toast.error(msg);
+        console.error("School update failed:", res.status, text.slice(0, 500));
         return;
       }
       toast.success("School updated.");
@@ -261,6 +294,31 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
                 </div>
               </div>
             </div>
+
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-300">Type</FormLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="team">Team</SelectItem>
+                      <SelectItem value="school">School</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -450,6 +508,132 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
                 </FormItem>
               )}
             />
+
+            <div className="border border-slate-600 rounded-lg p-4 space-y-4">
+              <p className="text-slate-400 text-sm font-medium">Boys / Girls program details (shown in blocks on the detail page)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <h4 className="text-slate-300 text-sm font-medium">Boys</h4>
+                  <FormField
+                    control={form.control}
+                    name="boysWebsite"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-400 text-xs">Website</FormLabel>
+                        <FormControl>
+                          <Input
+                            className="bg-slate-700 border-slate-600 text-white text-sm"
+                            placeholder="https://..."
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="boysLeague"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-400 text-xs">Leagues</FormLabel>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {leagues.slice(0, 12).map((l) => (
+                            <div key={l} className="flex items-center gap-1">
+                              <Checkbox
+                                id={`boys-league-edit-${l}`}
+                                checked={field.value?.includes(l)}
+                                onCheckedChange={(c) =>
+                                  c
+                                    ? field.onChange([...(field.value ?? []), l])
+                                    : field.onChange((field.value ?? []).filter((v) => v !== l))
+                                }
+                                className="border-slate-500 data-[state=checked]:bg-blue-600 h-3.5 w-3.5"
+                              />
+                              <label htmlFor={`boys-league-edit-${l}`} className="text-slate-400 text-xs cursor-pointer">{l}</label>
+                            </div>
+                          ))}
+                        </div>
+                        <Input
+                          className="mt-1 h-8 text-xs bg-slate-700 border-slate-600 text-white"
+                          placeholder="Add boys league (type & Enter)"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const input = e.target as HTMLInputElement;
+                              const v = input.value.trim();
+                              if (v && !(field.value ?? []).includes(v)) {
+                                field.onChange([...(field.value ?? []), v]);
+                                input.value = "";
+                              }
+                            }
+                          }}
+                        />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="space-y-3">
+                  <h4 className="text-slate-300 text-sm font-medium">Girls</h4>
+                  <FormField
+                    control={form.control}
+                    name="girlsWebsite"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-400 text-xs">Website</FormLabel>
+                        <FormControl>
+                          <Input
+                            className="bg-slate-700 border-slate-600 text-white text-sm"
+                            placeholder="https://..."
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="girlsLeague"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-400 text-xs">Leagues</FormLabel>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {leagues.slice(0, 12).map((l) => (
+                            <div key={l} className="flex items-center gap-1">
+                              <Checkbox
+                                id={`girls-league-edit-${l}`}
+                                checked={field.value?.includes(l)}
+                                onCheckedChange={(c) =>
+                                  c
+                                    ? field.onChange([...(field.value ?? []), l])
+                                    : field.onChange((field.value ?? []).filter((v) => v !== l))
+                                }
+                                className="border-slate-500 data-[state=checked]:bg-pink-600 h-3.5 w-3.5"
+                              />
+                              <label htmlFor={`girls-league-edit-${l}`} className="text-slate-400 text-xs cursor-pointer">{l}</label>
+                            </div>
+                          ))}
+                        </div>
+                        <Input
+                          className="mt-1 h-8 text-xs bg-slate-700 border-slate-600 text-white"
+                          placeholder="Add girls league (type & Enter)"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const input = e.target as HTMLInputElement;
+                              const v = input.value.trim();
+                              if (v && !(field.value ?? []).includes(v)) {
+                                field.onChange([...(field.value ?? []), v]);
+                                input.value = "";
+                              }
+                            }
+                          }}
+                        />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
 
             <div>
               <FormLabel className="text-slate-300">Gender</FormLabel>

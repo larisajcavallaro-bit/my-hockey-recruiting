@@ -123,12 +123,13 @@ export async function POST(request: Request) {
       if (parentProfileId !== targetParentId || !targetCoachId) {
         return NextResponse.json({ error: "Invalid request" }, { status: 400 });
       }
-      // Parent requesting: require Gold+ for contact_requests
+      // Parent requesting: require Gold+ for contact_requests (admins get Elite visibility)
+      const role = (session.user as { role?: string })?.role;
       const parentProfile = await prisma.parentProfile.findUnique({
         where: { id: parentProfileId },
         select: { planId: true },
       });
-      if (!hasFeature(parentProfile?.planId, "contact_requests")) {
+      if (!hasFeature(parentProfile?.planId, "contact_requests", { asAdmin: role === "ADMIN" })) {
         return NextResponse.json(
           { error: "Contact requests require a Gold plan or higher. Upgrade to connect with coaches." },
           { status: 403 }

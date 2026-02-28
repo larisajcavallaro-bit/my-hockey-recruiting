@@ -72,11 +72,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Cannot request your own contact" }, { status: 400 });
     }
 
+    const role = (session.user as { role?: string })?.role;
     const parentProfile = await prisma.parentProfile.findUnique({
       where: { id: requestingParentId },
       select: { planId: true },
     });
-    if (!hasFeature(parentProfile?.planId, "parent_contact_requests")) {
+    if (!hasFeature(parentProfile?.planId, "parent_contact_requests", { asAdmin: role === "ADMIN" })) {
       return NextResponse.json(
         { error: "Contact requests require a Gold plan or higher. Upgrade to connect with other parents." },
         { status: 403 }

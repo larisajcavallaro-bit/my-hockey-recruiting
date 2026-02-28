@@ -44,7 +44,7 @@ git push -u origin main
 
 ## Step 4: Sync the Database Schema (after schema changes)
 
-If you changed the Prisma schema (e.g. contact form fields), sync your **production** database:
+If you changed the Prisma schema (e.g. contact form fields, boys/girls website columns), sync your **production** database:
 
 ```bash
 # Set your production DATABASE_URL (copy from Vercel env vars), then:
@@ -52,6 +52,8 @@ DATABASE_URL="your-production-neon-url" npx prisma db push
 ```
 
 This ensures the live database has the same tables and columns as your code.
+
+**Troubleshooting:** If editing schools fails with an error about `boysWebsite` or `girlsWebsite`, see [SCHOOL-DB-SCHEMA-FIX.md](./SCHOOL-DB-SCHEMA-FIX.md).
 
 ---
 

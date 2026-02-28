@@ -15,6 +15,13 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Image from "next/image";
 import Link from "next/link";
 import AddFacilityFormModal from "../modal/AddFacilityFormModal";
@@ -75,6 +82,7 @@ export default function TrainingFacilitiesGrid() {
   } | null>(null);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [filterMinStars, setFilterMinStars] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -130,8 +138,15 @@ export default function TrainingFacilitiesGrid() {
       );
     }
 
+    // Star rating filter: must have reviews and meet minimum
+    if (filterMinStars > 0) {
+      result = result.filter(
+        (f) => f.reviewCount > 0 && f.rating >= filterMinStars
+      );
+    }
+
     return result;
-  }, [facilities, searchQuery, userLocation, selectedTypes, selectedAmenities]);
+  }, [facilities, searchQuery, userLocation, selectedTypes, selectedAmenities, filterMinStars]);
 
   const handlePlaceSelect = (place: { address: string; lat: number; lng: number }) => {
     setUserLocation({ lat: place.lat, lng: place.lng, address: place.address });
@@ -187,6 +202,20 @@ export default function TrainingFacilitiesGrid() {
                 />
               </div>
               <div className="hidden md:flex items-center gap-2">
+                <Select
+                  value={filterMinStars.toString()}
+                  onValueChange={(v) => setFilterMinStars(parseInt(v, 10))}
+                >
+                  <SelectTrigger className="w-[115px] h-10 border-0 bg-transparent shadow-none focus:ring-0">
+                    <SelectValue placeholder="Rating" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">All ratings</SelectItem>
+                    <SelectItem value="5">5 stars</SelectItem>
+                    <SelectItem value="4">4+ stars</SelectItem>
+                    <SelectItem value="3">3+ stars</SelectItem>
+                  </SelectContent>
+                </Select>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -261,6 +290,20 @@ export default function TrainingFacilitiesGrid() {
             </div>
             {/* Mobile filters - visible on small screens, hidden on md+ */}
             <div className="md:hidden flex flex-col sm:flex-row flex-wrap gap-3 p-3 border-t border-gray-200 bg-gray-50/60">
+              <Select
+                value={filterMinStars.toString()}
+                onValueChange={(v) => setFilterMinStars(parseInt(v, 10))}
+              >
+                <SelectTrigger className="w-[140px] h-10 bg-white border border-gray-200">
+                  <SelectValue placeholder="Rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">All ratings</SelectItem>
+                  <SelectItem value="5">5 stars</SelectItem>
+                  <SelectItem value="4">4+ stars</SelectItem>
+                  <SelectItem value="3">3+ stars</SelectItem>
+                </SelectContent>
+              </Select>
               <div className="flex items-center gap-2 w-full sm:w-auto sm:min-w-[200px]">
                 <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
                 <AddressAutocomplete

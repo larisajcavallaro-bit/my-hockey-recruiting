@@ -48,6 +48,9 @@ scripts/facility-images-by-row/
 # Python venv (for facility import scripts)
 .venv-numbers/
 
+# screen recordings / large media
+docs/screen-recordings/
+
 # Playwright
 /test-results/
 /playwright-report/

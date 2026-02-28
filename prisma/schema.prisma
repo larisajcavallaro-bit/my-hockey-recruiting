@@ -521,16 +521,21 @@ model FacilityReview {
 // ─── Teams and Schools (like Training, but for schools/programs) ────────
 model SchoolSubmission {
   id              String   @id @default(cuid())
+  type            String   @default("team") // "team" | "school"
   name            String
   address         String
   city            String
   zipCode         String   @map("zip_code")
   phone           String?
   website         String?
+  boysWebsite     String?  @map("boys_website")
+  girlsWebsite    String?  @map("girls_website")
   description     String   @db.Text
   imageUrl        String?  @map("image_url")
   gender          String[] @default([]) // Male, Female, Co-ed
   league          String[] @default([]) // can span multiple leagues
+  boysLeague      String[] @default([]) @map("boys_league")
+  girlsLeague     String[] @default([]) @map("girls_league")
   ageBracketFrom  String?  @map("age_bracket_from") // U6, U8, ..., U20
   ageBracketTo    String?  @map("age_bracket_to")
   submittedBy     String?  @map("submitted_by")

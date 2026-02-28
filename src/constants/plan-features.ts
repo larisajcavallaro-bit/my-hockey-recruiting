@@ -45,8 +45,10 @@ export function getEffectiveTier(planId: string | null | undefined): PlanId {
 
 export function hasFeature(
   planId: string | null | undefined,
-  featureKey: keyof typeof PLAN_FEATURES
+  featureKey: keyof typeof PLAN_FEATURES,
+  options?: { asAdmin?: boolean }
 ): boolean {
+  if (options?.asAdmin) return true; // Admins get full Elite visibility/capabilities
   const minPlan = PLAN_FEATURES[featureKey];
   if (!minPlan) return true; // No restriction
   const tier = getEffectiveTier(planId);

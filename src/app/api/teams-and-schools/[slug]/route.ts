@@ -12,6 +12,10 @@ export type SchoolDetail = {
   image: string;
   description: string;
   website: string | null;
+  boysWebsite: string | null;
+  girlsWebsite: string | null;
+  boysLeague: string[];
+  girlsLeague: string[];
 };
 
 /** GET - fetch a single school by slug */
@@ -46,6 +50,10 @@ export async function GET(
       image,
       description: sub.description,
       website: sub.website,
+      boysWebsite: sub.boysWebsite ?? sub.website,
+      girlsWebsite: sub.girlsWebsite ?? sub.website,
+      boysLeague: sub.boysLeague?.length ? sub.boysLeague : sub.league,
+      girlsLeague: sub.girlsLeague?.length ? sub.girlsLeague : sub.league,
     };
 
     return NextResponse.json(

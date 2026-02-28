@@ -10,7 +10,7 @@ const createReviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   text: z.string().max(2000).optional(),
   ageBracket: z.array(z.enum(AGE_BRACKETS)).min(1, "Select at least one age your kid played"),
-  gender: z.enum(["Boys", "Girls"]),
+  gender: z.enum(["Boys", "Girls"]).optional(),
   league: z.string().min(1, "Select the league"),
 });
 
@@ -83,7 +83,8 @@ export async function POST(
     const parentProfileId = (session.user as { parentProfileId?: string | null }).parentProfileId;
     const coachProfileId = (session.user as { coachProfileId?: string | null }).coachProfileId;
 
-    if (!parentProfileId && !coachProfileId) {
+    const role = (session.user as { role?: string })?.role;
+    if (!parentProfileId && !coachProfileId && role !== "ADMIN") {
       return NextResponse.json(
         { error: "Only parents and coaches can leave reviews" },
         { status: 403 }
@@ -99,7 +100,8 @@ export async function POST(
       planId = p?.planId ?? null;
     }
     if (coachProfileId && !parentProfileId) planId = "gold";
-    if (!hasFeature(planId ?? undefined, "facility_reviews")) {
+    if (role === "ADMIN") planId = "elite";
+    if (!hasFeature(planId ?? undefined, "facility_reviews", { asAdmin: role === "ADMIN" })) {
       return NextResponse.json(
         { error: "Reviews require a Gold plan or higher. Upgrade to submit reviews." },
         { status: 403 }
@@ -124,7 +126,7 @@ export async function POST(
         rating: data.rating,
         text: data.text || null,
         ageBracket: data.ageBracket,
-        gender: data.gender,
+        gender: data.gender ?? null,
         league: data.league,
       },
     });

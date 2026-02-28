@@ -499,25 +499,7 @@ async function main() {
     });
   }
 
-  // Demo school for Teams and Schools page
-  await prisma.schoolSubmission.upsert({
-    where: { id: "seed-school-1" },
-    create: {
-      id: "seed-school-1",
-      name: "NE Knights AAA",
-      address: "123 Rink Road",
-      city: "Boston",
-      zipCode: "02101",
-      description: "A premier AAA hockey program serving youth players in the Northeast. Top-tier coaching and development.",
-      status: "approved",
-      slug: "ne-knights-aaa",
-      gender: ["Male"],
-      league: ["E9 Boys", "EHF"],
-      ageBracketFrom: "U10",
-      ageBracketTo: "U18",
-    },
-    update: { name: "NE Knights AAA", status: "approved", slug: "ne-knights-aaa", gender: ["Male"], league: ["E9 Boys", "EHF"], ageBracketFrom: "U10", ageBracketTo: "U18" },
-  });
+  // Teams/schools: use load-teams to import from docs/1MHR_All_Teams_Expanded.csv (no demo entries)
 
   console.log("Seed complete!");
   console.log("  Admin: admin@example.com / password123");

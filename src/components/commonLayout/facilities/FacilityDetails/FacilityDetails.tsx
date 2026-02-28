@@ -179,6 +179,14 @@ export default function FacilityDetails({ facilitySlug }: FacilityDetailsProps) 
               <p className="text-muted-foreground leading-relaxed">
                 {facilityInfo.description}
               </p>
+              <p className="mt-4">
+                <Link
+                  href="/contact-us?topic=info-correction"
+                  className="text-sm text-primary hover:underline"
+                >
+                  See something incorrect? Contact us to get it updated
+                </Link>
+              </p>
             </CardContent>
           </Card>
 
