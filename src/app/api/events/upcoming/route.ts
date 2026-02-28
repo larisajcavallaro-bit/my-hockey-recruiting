@@ -22,6 +22,7 @@ export async function GET() {
         where: {
           coachId: coachProfileId,
           startAt: { gte: new Date() },
+          id: { not: { startsWith: "seed-" } },
         },
         include: {
           rsvps: { where: { status: "going" } },
@@ -53,7 +54,10 @@ export async function GET() {
       where: {
         parentProfileId,
         status: "going",
-        event: { startAt: { gte: new Date() } },
+        event: {
+          startAt: { gte: new Date() },
+          id: { not: { startsWith: "seed-" } },
+        },
       },
       include: {
         event: true,

@@ -20,7 +20,11 @@ export async function GET(request: Request) {
     const mine = searchParams.get("mine") === "1";
 
     const from = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const where: { startAt: { gte: Date }; coachId?: string } = { startAt: { gte: from } };
+    const where: { startAt: { gte: Date }; coachId?: string; id?: { not: { startsWith: string } } } = {
+      startAt: { gte: from },
+      // Exclude seed/test events (id starts with "seed-")
+      id: { not: { startsWith: "seed-" } },
+    };
     if (mine && coachProfileId) {
       where.coachId = coachProfileId;
     }
