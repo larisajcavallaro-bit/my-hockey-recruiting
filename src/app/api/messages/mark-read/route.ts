@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 /** POST - mark contact message(s) as read. Body: { messageId?: string } to mark one, or omit to mark all */
-export async function POST(request?: Request) {
+export async function POST(request: Request) {
   try {
     const session = await auth();
     const userId = session?.user?.id;
@@ -13,7 +13,7 @@ export async function POST(request?: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = request ? await request.json().catch(() => ({})) : {};
+    const body = await request.json().catch(() => ({}));
     const messageId = body?.messageId;
 
     const where = messageId
