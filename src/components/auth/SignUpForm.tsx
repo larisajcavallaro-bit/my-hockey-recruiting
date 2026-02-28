@@ -179,7 +179,21 @@ export default function RegisterPage() {
                 }),
               });
               const apiData = await res.json().catch(() => ({}));
-              if (!res.ok) throw new Error(apiData.error ?? "Sign up failed");
+              if (!res.ok) {
+                if (res.status === 409 && apiData.unverified && apiData.email) {
+                  toast.info("Let's verify your phone to finish setting up your account.", {
+                    duration: 8000,
+                    action: {
+                      label: "Verify now",
+                      onClick: () =>
+                        router.push(`/auth/email-verify?email=${encodeURIComponent(apiData.email)}`),
+                    },
+                  });
+                  router.push(`/auth/email-verify?email=${encodeURIComponent(apiData.email)}`);
+                  return;
+                }
+                throw new Error(apiData.error ?? "Sign up failed");
+              }
               // Redirect to verification - must verify before access
               const roleParam = userType === "coach" ? "COACH" : "PARENT";
               const verifyUrl = `/auth/email-verify?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&role=${roleParam}`;

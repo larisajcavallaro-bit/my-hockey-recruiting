@@ -17,7 +17,8 @@ const Header = () => {
   const isLoggedIn = status === "authenticated" && !!session?.user;
   const role = (session?.user as { role?: string })?.role;
   const coachProfileId = (session?.user as { coachProfileId?: string | null })?.coachProfileId;
-  const dashboardPath = role === "COACH" ? "/coach-dashboard" : "/parent-dashboard";
+  const dashboardPath =
+    role === "ADMIN" ? "/admin-dashboard" : role === "COACH" ? "/coach-dashboard" : "/parent-dashboard";
 
   const fetchProfileImage = useCallback(() => {
     if (!isLoggedIn) return;

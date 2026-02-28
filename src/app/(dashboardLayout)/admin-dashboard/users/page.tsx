@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Ban, ChevronDown, ChevronRight } from "lucide-react";
+import { Download, Ban, ChevronDown, ChevronRight, CheckCircle2 } from "lucide-react";
 import { toCSV, downloadFile } from "@/lib/csv-utils";
 import { toast } from "sonner";
 
@@ -55,6 +55,7 @@ export default function AdminUsersPage() {
   const [blockDialog, setBlockDialog] = useState<{ user: User } | null>(null);
   const [blockReason, setBlockReason] = useState("");
   const [blocking, setBlocking] = useState(false);
+  const [verifying, setVerifying] = useState<string | null>(null);
 
   const fetchUsers = (paramsOverride?: URLSearchParams) => {
     const params = paramsOverride ?? new URLSearchParams();
@@ -137,6 +138,29 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleVerifyPhone = async (user: User) => {
+    setVerifying(user.id);
+    try {
+      const res = await fetch("/api/admin/users/verify-phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Failed to verify");
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === user.id ? { ...u, emailVerified: new Date() } : u
+        )
+      );
+      toast.success(data.message ?? "User can now sign in.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to verify");
+    } finally {
+      setVerifying(null);
+    }
+  };
+
   const handleUnblock = async (email: string) => {
     const norm = email.toLowerCase();
     try {
@@ -214,6 +238,7 @@ export default function AdminUsersPage() {
                     <th className="py-2 text-slate-400 font-medium">Children</th>
                     <th className="py-2 text-slate-400 font-medium">Plan</th>
                     <th className="py-2 text-slate-400 font-medium">Joined</th>
+                    <th className="py-2 text-slate-400 font-medium">Status</th>
                     <th className="py-2 text-slate-400 font-medium">Actions</th>
                   </tr>
                 </thead>
@@ -268,10 +293,49 @@ export default function AdminUsersPage() {
                             {new Date(u.createdAt).toLocaleDateString()}
                           </td>
                           <td className="py-3">
+                            {u.emailVerified ? (
+                              <Badge className="bg-green-900/50 text-green-400">Verified</Badge>
+                            ) : (
+                              <Badge className="bg-amber-900/50 text-amber-400">Unverified</Badge>
+                            )}
+                          </td>
+                          <td className="py-3">
                             {u.role === "ADMIN" ? (
                               <span className="text-slate-500 text-sm">
                                 —
                               </span>
+                            ) : !u.emailVerified ? (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-amber-600 text-amber-400 hover:bg-amber-900/30"
+                                  onClick={() => handleVerifyPhone(u)}
+                                  disabled={verifying === u.id}
+                                >
+                                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                                  {verifying === u.id ? "…" : "Verify"}
+                                </Button>
+                                {blocked ? (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-green-600 text-green-400 hover:bg-green-900/30"
+                                    onClick={() => handleUnblock(u.email)}
+                                  >
+                                    Unblock
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-red-600 text-red-400 hover:bg-red-900/30"
+                                    onClick={() => setBlockDialog({ user: u })}
+                                  >
+                                    <Ban className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </div>
                             ) : blocked ? (
                               <Button
                                 size="sm"
@@ -296,7 +360,7 @@ export default function AdminUsersPage() {
                         </tr>
                         {expanded && (
                           <tr key={`${u.id}-detail`}>
-                            <td colSpan={9} className="py-0 pb-3">
+                            <td colSpan={10} className="py-0 pb-3">
                               <div className="bg-slate-900/50 rounded-lg p-4 text-sm space-y-2">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-300">
                                   <div>

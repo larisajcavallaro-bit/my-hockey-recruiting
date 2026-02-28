@@ -50,8 +50,21 @@ export async function POST(request: Request) {
     }
     const existing = await prisma.user.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
+      select: { id: true, email: true, emailVerified: true, role: true },
     });
     if (existing) {
+      // Unverified parent/coach: help them complete verification instead of blocking
+      if (!existing.emailVerified && existing.role !== "ADMIN") {
+        return NextResponse.json(
+          {
+            error: "Your account wasn't fully set up. The verification code may not have been delivered.",
+            code: "UNVERIFIED_ACCOUNT",
+            unverified: true,
+            email: existing.email,
+          },
+          { status: 409 }
+        );
+      }
       return NextResponse.json(
         { error: "An account with this email already exists" },
         { status: 409 }
