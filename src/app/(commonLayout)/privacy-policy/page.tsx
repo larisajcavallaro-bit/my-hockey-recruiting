@@ -67,15 +67,15 @@ const PrivacyPolicyPage = () => {
     },
     { id: "data-sharing", label: "Data Sharing", icon: Share2 },
     { id: "data-security", label: "Data Security", icon: Lock },
-    { id: "protection", label: "modification of Protection", icon: Shield },
+    { id: "protection", label: "Updates to This Policy", icon: Shield },
     { id: "rights", label: "Your Rights", icon: FileText },
-    { id: "changes", label: "Changes to This Policy", icon: RefreshCw },
+    { id: "changes", label: "Contact Us", icon: RefreshCw },
   ];
 
   return (
-    <section className="py-15 bg-background">
-      <div className="container mx-auto px-4">
-        <h2 className="text-4xl font-bold text-center mb-4">
+    <section className="py-10 md:py-15 bg-background overflow-x-hidden">
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
           My Hockey Recruiting <span className="text-primary">Privacy Policy</span>
         </h2>
         <p className="text-center text-muted-foreground mb-12 max-w-3xl mx-auto">
@@ -84,10 +84,10 @@ const PrivacyPolicyPage = () => {
           consent.
         </p>
 
-        <div className="flex gap-8">
+        <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <div className="shrink-0">
-            <div className="sticky top-4">
+          <div className="shrink-0 w-full lg:w-auto">
+            <div className="lg:sticky lg:top-4">
               <div className="bg-card border border-border rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-6">
                   Privacy Policy
@@ -116,7 +116,7 @@ const PrivacyPolicyPage = () => {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 max-w-4xl">
+          <div className="flex-1 min-w-0 max-w-4xl">
             {/* Overview Section */}
             <section id="overview" className="mb-16 scroll-mt-20">
               <h1 className="text-4xl font-bold text-foreground mb-4">

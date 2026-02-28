@@ -84,9 +84,9 @@ const TermsOfServicePage = () => {
   );
 
   return (
-    <section className="py-15 bg-background">
-      <div className="container mx-auto px-4">
-        <h2 className="text-4xl font-bold text-center mb-4">
+    <section className="py-10 md:py-15 bg-background overflow-x-hidden">
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
           My Hockey Recruiting{" "}
           <span className="text-primary">Terms of Service</span>
         </h2>
@@ -95,10 +95,10 @@ const TermsOfServicePage = () => {
           them carefully before creating an account or using our platform.
         </p>
 
-        <div className="flex gap-8">
+        <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <div className="shrink-0">
-            <div className="sticky top-4">
+          <div className="shrink-0 w-full lg:w-auto">
+            <div className="lg:sticky lg:top-4">
               <div className="bg-card border border-border rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-6">
                   Terms of Service
@@ -127,7 +127,7 @@ const TermsOfServicePage = () => {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 max-w-4xl">
+          <div className="flex-1 min-w-0 max-w-4xl">
             {/* Acceptance of Terms */}
             <section
               id="acceptance"
