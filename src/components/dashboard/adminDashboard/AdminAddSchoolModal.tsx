@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GENDER_OPTIONS, AGE_BRACKETS } from "@/constants/schools";
+import { GENDER_OPTIONS, AGE_BRACKETS, BOYS_LEAGUES, GIRLS_LEAGUES } from "@/constants/schools";
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
 const SCHOOL_IMAGE_SIZE = { w: 960, h: 480 };
@@ -78,7 +78,6 @@ const formSchema = z.object({
   description: z.string().min(10, "Required"),
   imageUrl: z.string().optional(),
   gender: z.array(z.string()),
-  league: z.array(z.string()),
   boysLeague: z.array(z.string()),
   girlsLeague: z.array(z.string()),
   noGirlsProgram: z.boolean(),
@@ -100,7 +99,6 @@ const defaultFormValues = {
   description: "",
   imageUrl: "",
   gender: [] as string[],
-  league: [] as string[],
   boysLeague: [] as string[],
   girlsLeague: [] as string[],
   noGirlsProgram: false,
@@ -114,7 +112,6 @@ interface AdminAddSchoolModalProps {
 
 export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProps) {
   const [open, setOpen] = useState(false);
-  const [leagues, setLeagues] = useState<string[]>([]);
   const [rinks, setRinks] = useState<Rink[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const form = useForm<z.infer<typeof formSchema>>({
@@ -124,13 +121,6 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
 
   useEffect(() => {
     if (open) {
-      fetch("/api/admin/lookups?category=league")
-        .then((r) => r.json())
-        .then((data) => {
-          const vals = (data.lookups ?? []).map((l: { value: string }) => l.value);
-          setLeagues(vals);
-        })
-        .catch(() => setLeagues([]));
       fetch("/api/admin/rinks")
         .then((r) => r.json())
         .then((data) => setRinks(data.rinks ?? []))
@@ -167,7 +157,7 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
           website: values.website || undefined,
           boysWebsite: values.boysWebsite || undefined,
           girlsWebsite: values.girlsWebsite || undefined,
-          league: values.league,
+          league: [...new Set([...(values.boysLeague ?? []), ...(values.girlsLeague ?? [])])],
           boysLeague: values.boysLeague ?? [],
           girlsLeague: values.girlsLeague ?? [],
           noGirlsProgram: values.noGirlsProgram ?? false,
@@ -469,94 +459,6 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="league"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-slate-300">Leagues (multiselect)</FormLabel>
-                  <p className="text-slate-500 text-xs mb-2">Programs can span multiple leagues as players get older.</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-                    {leagues.map((l) => (
-                      <div
-                        key={l}
-                        className="flex items-center space-x-2 border border-slate-600 rounded p-2"
-                      >
-                        <Checkbox
-                          id={`league-${l}`}
-                          checked={field.value?.includes(l)}
-                          onCheckedChange={(c) =>
-                            c
-                              ? field.onChange([...(field.value ?? []), l])
-                              : field.onChange((field.value ?? []).filter((v) => v !== l))
-                          }
-                          className="border-slate-500 data-[state=checked]:bg-amber-600"
-                        />
-                        <label
-                          htmlFor={`league-${l}`}
-                          className="text-slate-300 text-sm cursor-pointer"
-                        >
-                          {l}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      className="flex-1 bg-slate-700 border-slate-600 text-white"
-                      placeholder="Add custom league (type & press Enter)"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          const input = e.target as HTMLInputElement;
-                          const v = input.value.trim();
-                          if (v && !(field.value ?? []).includes(v) && !leagues.includes(v)) {
-                            field.onChange([...(field.value ?? []), v]);
-                            input.value = "";
-                          }
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="border-slate-500 text-slate-300 shrink-0"
-                      onClick={() => {
-                        const input = document.querySelector('input[placeholder="Add custom league (type & press Enter)"]') as HTMLInputElement;
-                        const v = input?.value?.trim();
-                        if (v && !(field.value ?? []).includes(v) && !leagues.includes(v)) {
-                          field.onChange([...(field.value ?? []), v]);
-                          input.value = "";
-                        }
-                      }}
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  {(field.value ?? []).filter((l) => !leagues.includes(l)).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {(field.value ?? []).filter((l) => !leagues.includes(l)).map((l) => (
-                        <span
-                          key={l}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-600 text-slate-300 text-sm"
-                        >
-                          {l}
-                          <button
-                            type="button"
-                            onClick={() => field.onChange((field.value ?? []).filter((x) => x !== l))}
-                            className="hover:text-white"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </FormItem>
-              )}
-            />
-
             <div className="border border-slate-600 rounded-lg p-4 space-y-4">
               <p className="text-slate-400 text-sm font-medium">Boys / Girls program details (optional — shown in blocks on the detail page)</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -583,9 +485,9 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
                     name="boysLeague"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-400 text-xs">Leagues</FormLabel>
+                        <FormLabel className="text-slate-400 text-xs">Leagues (maps to Boys block on profile)</FormLabel>
                         <div className="flex flex-wrap gap-1.5 mt-1">
-                          {leagues.slice(0, 12).map((l) => (
+                          {[...new Set([...BOYS_LEAGUES, ...(field.value ?? []).filter((x) => !(BOYS_LEAGUES as readonly string[]).includes(x))])].map((l) => (
                             <div key={l} className="flex items-center gap-1">
                               <Checkbox
                                 id={`boys-league-${l}`}
@@ -668,9 +570,9 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
                     name="girlsLeague"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-400 text-xs">Leagues</FormLabel>
+                        <FormLabel className="text-slate-400 text-xs">Leagues (maps to Girls block on profile)</FormLabel>
                         <div className="flex flex-wrap gap-1.5 mt-1">
-                          {leagues.slice(0, 12).map((l) => (
+                          {[...new Set([...GIRLS_LEAGUES, ...(field.value ?? []).filter((x) => !(GIRLS_LEAGUES as readonly string[]).includes(x))])].map((l) => (
                             <div key={l} className="flex items-center gap-1">
                               <Checkbox
                                 id={`girls-league-${l}`}

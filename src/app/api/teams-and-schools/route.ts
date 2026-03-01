@@ -68,10 +68,11 @@ export async function GET(request: Request) {
         (s.gender?.includes("Male") ?? false) ||
         (s.gender?.includes("Co-ed") ?? false);
       const hasGirls =
-        (s.girlsWebsite != null && s.girlsWebsite.trim() !== "") ||
-        (s.girlsLeague?.length ?? 0) > 0 ||
-        (s.gender?.includes("Female") ?? false) ||
-        (s.gender?.includes("Co-ed") ?? false);
+        !(s.noGirlsProgram ?? false) &&
+        ((s.girlsWebsite != null && s.girlsWebsite.trim() !== "") ||
+          (s.girlsLeague?.length ?? 0) > 0 ||
+          (s.gender?.includes("Female") ?? false) ||
+          (s.gender?.includes("Co-ed") ?? false));
       const ageBrackets: string[] = [];
       const from = s.ageBracketFrom?.trim();
       const to = s.ageBracketTo?.trim();
