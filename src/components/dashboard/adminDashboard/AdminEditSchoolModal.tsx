@@ -143,28 +143,59 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
   });
 
   useEffect(() => {
-    if (open) {
-      form.reset({
-        type: school.type === "school" ? "school" : "team",
-        name: school.name,
-        rinkName: school.rinkName ?? "",
-        address: school.address,
-        city: school.city,
-        zipCode: school.zipCode,
-        phone: school.phone ?? "",
-        website: school.website ?? "",
-        boysWebsite: school.boysWebsite ?? "",
-        girlsWebsite: school.girlsWebsite ?? "",
-        description: school.description,
-        imageUrl: school.imageUrl ?? "",
-        gender: school.gender ?? [],
-        league: school.league ?? [],
-        boysLeague: school.boysLeague ?? [],
-        girlsLeague: school.girlsLeague ?? [],
-        noGirlsProgram: school.noGirlsProgram ?? false,
-        ageBracketFrom: school.ageBracketFrom ?? "",
-        ageBracketTo: school.ageBracketTo ?? "",
-      });
+    if (open && school.id) {
+      // Fetch fresh school data from DB so we always show current boysLeague/girlsLeague
+      fetch(`/api/admin/schools/${school.id}`)
+        .then((r) => r.json())
+        .then((fresh) => {
+          const s = fresh?.id ? fresh : school;
+          const boys = Array.isArray(s.boysLeague) ? s.boysLeague : [];
+          const girls = Array.isArray(s.girlsLeague) ? s.girlsLeague : [];
+          form.reset({
+            type: s.type === "school" ? "school" : "team",
+            name: s.name,
+            rinkName: s.rinkName ?? "",
+            address: s.address,
+            city: s.city,
+            zipCode: s.zipCode,
+            phone: s.phone ?? "",
+            website: s.website ?? "",
+            boysWebsite: s.boysWebsite ?? "",
+            girlsWebsite: s.girlsWebsite ?? "",
+            description: s.description,
+            imageUrl: s.imageUrl ?? "",
+            gender: Array.isArray(s.gender) ? s.gender : [],
+            league: Array.isArray(s.league) ? s.league : [],
+            boysLeague: boys,
+            girlsLeague: girls,
+            noGirlsProgram: s.noGirlsProgram ?? false,
+            ageBracketFrom: s.ageBracketFrom ?? "",
+            ageBracketTo: s.ageBracketTo ?? "",
+          });
+        })
+        .catch(() => {
+          form.reset({
+            type: school.type === "school" ? "school" : "team",
+            name: school.name,
+            rinkName: school.rinkName ?? "",
+            address: school.address,
+            city: school.city,
+            zipCode: school.zipCode,
+            phone: school.phone ?? "",
+            website: school.website ?? "",
+            boysWebsite: school.boysWebsite ?? "",
+            girlsWebsite: school.girlsWebsite ?? "",
+            description: school.description,
+            imageUrl: school.imageUrl ?? "",
+            gender: school.gender ?? [],
+            league: school.league ?? [],
+            boysLeague: school.boysLeague ?? [],
+            girlsLeague: school.girlsLeague ?? [],
+            noGirlsProgram: school.noGirlsProgram ?? false,
+            ageBracketFrom: school.ageBracketFrom ?? "",
+            ageBracketTo: school.ageBracketTo ?? "",
+          });
+        });
       fetch("/api/admin/rinks")
         .then((r) => r.json())
         .then((data) => setRinks(data.rinks ?? []))

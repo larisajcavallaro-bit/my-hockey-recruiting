@@ -9,6 +9,7 @@ export type SchoolGridItem = {
   slug: string;
   name: string;
   type: "team" | "school";
+  rinkName?: string | null;
   location: string;
   lat: number | null;
   lng: number | null;
@@ -94,6 +95,7 @@ export async function GET(request: Request) {
       return {
         slug: s.slug!,
         name: s.name,
+        rinkName: s.rinkName?.trim() || null,
         type,
         location: `${s.address}, ${s.city} ${s.zipCode}`,
         lat: s.lat ?? null,

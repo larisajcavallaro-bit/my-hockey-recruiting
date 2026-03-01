@@ -188,18 +188,6 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
         </div>
       </div>
 
-      {/* Rink + Address – above everything */}
-      <div className="mb-8 space-y-1">
-        {schoolInfo.rinkName && (
-          <p className="text-lg font-medium">
-            <span className="text-muted-foreground">Rink:</span> {schoolInfo.rinkName}
-          </p>
-        )}
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <LocationLink address={schoolInfo.address} />
-        </div>
-      </div>
-
       {/* Boys / Girls blocks – show when there's content or "No Girls program" */}
       {((schoolInfo.boysWebsite || (schoolInfo.boysLeague?.length ?? 0) > 0) ||
         (schoolInfo.girlsWebsite || (schoolInfo.girlsLeague?.length ?? 0) > 0) ||

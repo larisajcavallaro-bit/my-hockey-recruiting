@@ -53,6 +53,7 @@ type School = {
   type: "team" | "school";
   rating: number;
   reviewCount: number;
+  rinkName?: string | null;
   location: string;
   lat: number | null;
   lng: number | null;
@@ -121,8 +122,13 @@ function ProgramCard({ item }: { item: School }) {
             </span>
           </div>
         </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <LocationLink address={item.location} />
+        <div className="space-y-1 text-sm text-muted-foreground">
+          {item.rinkName && (
+            <p className="font-medium text-foreground">Rink: {item.rinkName}</p>
+          )}
+          <div className="flex items-center">
+            <LocationLink address={item.location} />
+          </div>
         </div>
       </CardContent>
     </Card>
