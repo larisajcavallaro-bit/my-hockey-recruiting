@@ -44,6 +44,7 @@ type SchoolInfo = {
   girlsWebsite?: string | null;
   boysLeague?: string[];
   girlsLeague?: string[];
+  noGirlsProgram?: boolean;
 };
 
 interface SchoolDetailsProps {
@@ -199,9 +200,10 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
         </div>
       </div>
 
-      {/* Boys / Girls blocks – only show when there's content */}
+      {/* Boys / Girls blocks – show when there's content or "No Girls program" */}
       {((schoolInfo.boysWebsite || (schoolInfo.boysLeague?.length ?? 0) > 0) ||
-        (schoolInfo.girlsWebsite || (schoolInfo.girlsLeague?.length ?? 0) > 0)) && (
+        (schoolInfo.girlsWebsite || (schoolInfo.girlsLeague?.length ?? 0) > 0) ||
+        schoolInfo.noGirlsProgram) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           {(schoolInfo.boysWebsite || (schoolInfo.boysLeague?.length ?? 0) > 0) && (
             <Card className="border-l-4 border-l-blue-600">
@@ -231,31 +233,35 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
               </CardContent>
             </Card>
           )}
-          {(schoolInfo.girlsWebsite || (schoolInfo.girlsLeague?.length ?? 0) > 0) && (
+          {(schoolInfo.noGirlsProgram || schoolInfo.girlsWebsite || (schoolInfo.girlsLeague?.length ?? 0) > 0) && (
             <Card className="border-l-4 border-l-pink-500">
               <CardContent className="p-5">
                 <h3 className="font-semibold text-lg mb-3">Girls</h3>
-                <div className="space-y-2 text-sm">
-                  {schoolInfo.girlsWebsite && (
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <a
-                        href={schoolInfo.girlsWebsite.startsWith("http") ? schoolInfo.girlsWebsite : `https://${schoolInfo.girlsWebsite}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline truncate"
-                      >
-                        {schoolInfo.girlsWebsite.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                      </a>
-                    </div>
-                  )}
-                  {(schoolInfo.girlsLeague?.length ?? 0) > 0 && (
-                    <div>
-                      <span className="text-muted-foreground">Leagues: </span>
-                      <span className="font-medium">{schoolInfo.girlsLeague!.join(", ")}</span>
-                    </div>
-                  )}
-                </div>
+                {schoolInfo.noGirlsProgram ? (
+                  <p className="text-sm text-muted-foreground">No Girls program</p>
+                ) : (
+                  <div className="space-y-2 text-sm">
+                    {schoolInfo.girlsWebsite && (
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <a
+                          href={schoolInfo.girlsWebsite.startsWith("http") ? schoolInfo.girlsWebsite : `https://${schoolInfo.girlsWebsite}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline truncate"
+                        >
+                          {schoolInfo.girlsWebsite.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                        </a>
+                      </div>
+                    )}
+                    {(schoolInfo.girlsLeague?.length ?? 0) > 0 && (
+                      <div>
+                        <span className="text-muted-foreground">Leagues: </span>
+                        <span className="font-medium">{schoolInfo.girlsLeague!.join(", ")}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -388,6 +394,11 @@ export default function SchoolDetails({ schoolSlug }: SchoolDetailsProps) {
           <Card>
             <CardContent className="p-6 space-y-4">
               <h3 className="font-semibold">Contact</h3>
+              {schoolInfo.rinkName && (
+                <p className="text-sm">
+                  <span className="text-muted-foreground">Rink:</span> {schoolInfo.rinkName}
+                </p>
+              )}
               <div className="flex items-start gap-3 text-sm">
                 <LocationLink address={schoolInfo.address} />
               </div>

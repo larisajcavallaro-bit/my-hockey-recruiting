@@ -81,6 +81,7 @@ const formSchema = z.object({
   league: z.array(z.string()),
   boysLeague: z.array(z.string()),
   girlsLeague: z.array(z.string()),
+  noGirlsProgram: z.boolean(),
   ageBracketFrom: z.string().optional(),
   ageBracketTo: z.string().optional(),
 });
@@ -103,6 +104,7 @@ type SchoolData = {
   league: string[];
   boysLeague?: string[];
   girlsLeague?: string[];
+  noGirlsProgram?: boolean;
   ageBracketFrom: string | null;
   ageBracketTo: string | null;
 };
@@ -134,6 +136,7 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
       league: [],
       boysLeague: [],
       girlsLeague: [],
+      noGirlsProgram: false,
       ageBracketFrom: "",
       ageBracketTo: "",
     },
@@ -158,6 +161,7 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
         league: school.league ?? [],
         boysLeague: school.boysLeague ?? [],
         girlsLeague: school.girlsLeague ?? [],
+        noGirlsProgram: school.noGirlsProgram ?? false,
         ageBracketFrom: school.ageBracketFrom ?? "",
         ageBracketTo: school.ageBracketTo ?? "",
       });
@@ -207,6 +211,7 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
           league: values.league,
           boysLeague: values.boysLeague ?? [],
           girlsLeague: values.girlsLeague ?? [],
+          noGirlsProgram: values.noGirlsProgram ?? false,
           ageBracketFrom: values.ageBracketFrom || null,
           ageBracketTo: values.ageBracketTo || null,
           imageUrl: values.imageUrl || null,
@@ -666,6 +671,31 @@ export default function AdminEditSchoolModal({ school, onSaved }: AdminEditSchoo
                 </div>
                 <div className="space-y-3">
                   <h4 className="text-slate-300 text-sm font-medium">Girls</h4>
+                  <FormField
+                    control={form.control}
+                    name="noGirlsProgram"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            id="no-girls-edit"
+                            checked={field.value}
+                            onCheckedChange={(c) => {
+                              field.onChange(!!c);
+                              if (c) {
+                                form.setValue("girlsWebsite", "");
+                                form.setValue("girlsLeague", []);
+                              }
+                            }}
+                            className="border-slate-500 data-[state=checked]:bg-pink-600"
+                          />
+                        </FormControl>
+                        <FormLabel htmlFor="no-girls-edit" className="text-slate-400 text-sm cursor-pointer font-normal">
+                          No girls team – show "No Girls program" on website
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="girlsWebsite"

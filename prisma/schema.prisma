@@ -549,6 +549,7 @@ model SchoolSubmission {
   league          String[] @default([]) // can span multiple leagues
   boysLeague      String[] @default([]) @map("boys_league")
   girlsLeague     String[] @default([]) @map("girls_league")
+  noGirlsProgram  Boolean  @default(false) @map("no_girls_program") // when true, show "No Girls program" in girls block
   ageBracketFrom  String?  @map("age_bracket_from") // U6, U8, ..., U20
   ageBracketTo    String?  @map("age_bracket_to")
   submittedBy     String?  @map("submitted_by")

@@ -17,6 +17,7 @@ export type SchoolDetail = {
   girlsWebsite: string | null;
   boysLeague: string[];
   girlsLeague: string[];
+  noGirlsProgram?: boolean;
 };
 
 /** GET - fetch a single school by slug */
@@ -42,6 +43,9 @@ export async function GET(
         ? `${base}?v=${new Date(sub.updatedAt).getTime()}`
         : base;
 
+    const cleanLeague = (arr: string[] | null | undefined) =>
+      (arr ?? []).filter((s) => typeof s === "string" && s.trim().length > 0);
+
     const school: SchoolDetail = {
       slug: sub.slug!,
       name: sub.name,
@@ -54,8 +58,9 @@ export async function GET(
       website: sub.website,
       boysWebsite: sub.boysWebsite?.trim() || null,
       girlsWebsite: sub.girlsWebsite?.trim() || null,
-      boysLeague: sub.boysLeague ?? [],
-      girlsLeague: sub.girlsLeague ?? [],
+      boysLeague: cleanLeague(sub.boysLeague),
+      girlsLeague: cleanLeague(sub.girlsLeague),
+      noGirlsProgram: sub.noGirlsProgram ?? false,
     };
 
     return NextResponse.json(

@@ -23,6 +23,7 @@ const createSchema = z.object({
   league: z.array(z.string()).default([]),
   boysLeague: z.array(z.string()).default([]),
   girlsLeague: z.array(z.string()).default([]),
+  noGirlsProgram: z.boolean().optional(),
   ageBracketFrom: z.enum(AGE_BRACKETS).optional(),
   ageBracketTo: z.enum(AGE_BRACKETS).optional(),
 });
@@ -123,6 +124,7 @@ export async function POST(request: Request) {
         league: Array.isArray(data.league) ? data.league.filter((l) => l?.trim()) : [],
         boysLeague: Array.isArray(data.boysLeague) ? data.boysLeague.filter((l) => l?.trim()) : [],
         girlsLeague: Array.isArray(data.girlsLeague) ? data.girlsLeague.filter((l) => l?.trim()) : [],
+        noGirlsProgram: data.noGirlsProgram ?? false,
         ageBracketFrom: data.ageBracketFrom ?? null,
         ageBracketTo: data.ageBracketTo ?? null,
         status: "approved",

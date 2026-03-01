@@ -33,6 +33,7 @@ const updateSchema = z.object({
   league: z.array(z.string()).optional(),
   boysLeague: z.array(z.string()).optional(),
   girlsLeague: z.array(z.string()).optional(),
+  noGirlsProgram: z.boolean().optional(),
   ageBracketFrom: z.preprocess(
     (v) => (v === "" ? null : v),
     z.enum(AGE_BRACKETS).nullable().optional()
@@ -126,6 +127,7 @@ async function handlePatch(
     if (data.league !== undefined) updateData.league = Array.isArray(data.league) ? data.league.filter((l) => l?.trim()) : [];
     if (data.boysLeague !== undefined) updateData.boysLeague = Array.isArray(data.boysLeague) ? data.boysLeague.filter((l) => l?.trim()) : [];
     if (data.girlsLeague !== undefined) updateData.girlsLeague = Array.isArray(data.girlsLeague) ? data.girlsLeague.filter((l) => l?.trim()) : [];
+    if (data.noGirlsProgram !== undefined) updateData.noGirlsProgram = data.noGirlsProgram;
     if (data.ageBracketFrom !== undefined) updateData.ageBracketFrom = data.ageBracketFrom;
     if (data.ageBracketTo !== undefined) updateData.ageBracketTo = data.ageBracketTo;
 

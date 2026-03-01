@@ -81,6 +81,7 @@ const formSchema = z.object({
   league: z.array(z.string()),
   boysLeague: z.array(z.string()),
   girlsLeague: z.array(z.string()),
+  noGirlsProgram: z.boolean(),
   ageBracketFrom: z.string().optional(),
   ageBracketTo: z.string().optional(),
 });
@@ -102,6 +103,7 @@ const defaultFormValues = {
   league: [] as string[],
   boysLeague: [] as string[],
   girlsLeague: [] as string[],
+  noGirlsProgram: false,
   ageBracketFrom: "",
   ageBracketTo: "",
 };
@@ -168,6 +170,7 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
           league: values.league,
           boysLeague: values.boysLeague ?? [],
           girlsLeague: values.girlsLeague ?? [],
+          noGirlsProgram: values.noGirlsProgram ?? false,
           ageBracketFrom: values.ageBracketFrom || undefined,
           ageBracketTo: values.ageBracketTo || undefined,
           imageUrl: values.imageUrl || undefined,
@@ -619,6 +622,31 @@ export default function AdminAddSchoolModal({ onAdded }: AdminAddSchoolModalProp
                 </div>
                 <div className="space-y-3">
                   <h4 className="text-slate-300 text-sm font-medium">Girls</h4>
+                  <FormField
+                    control={form.control}
+                    name="noGirlsProgram"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            id="no-girls-add"
+                            checked={field.value}
+                            onCheckedChange={(c) => {
+                              field.onChange(!!c);
+                              if (c) {
+                                form.setValue("girlsWebsite", "");
+                                form.setValue("girlsLeague", []);
+                              }
+                            }}
+                            className="border-slate-500 data-[state=checked]:bg-pink-600"
+                          />
+                        </FormControl>
+                        <FormLabel htmlFor="no-girls-add" className="text-slate-400 text-sm cursor-pointer font-normal">
+                          No girls team – show "No Girls program" on website
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="girlsWebsite"
